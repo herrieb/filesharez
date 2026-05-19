@@ -1,0 +1,46 @@
+### Symfony ###
+/vendor/
+/var/
+/public/bundles/
+/config/secrets/prod/prod.decrypt.private.php
+
+### Environment ###
+.env.local
+.env.*.local
+.env.dev
+.env.prod
+.env.test
+
+### Docker overrides ###
+docker-compose.override.yml
+compose.override.yaml
+
+### IDE ###
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+### OS ###
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+### Node ###
+node_modules/
+
+### Uploads & storage ###
+storage/
+var/share/
+
+### Logs ###
+*.log
+
+### PHP ###
+.phpunit.result.cache
+phpunit.xml
+
+### Deployment docs (internal) ###
+deploy.md
+queue.md

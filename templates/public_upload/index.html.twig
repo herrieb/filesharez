@@ -1,0 +1,168 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Upload Files - FileShareZ{% endblock %}
+
+{% block body %}
+<div class="min-h-screen flex items-center justify-center p-4">
+    <div class="glass animate-in p-10 w-full max-w-lg" style="box-shadow: 0 0 80px rgba(108,178,255,0.06), 0 16px 48px rgba(0,0,0,0.5);">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 rounded-2xl bg-aero/10 flex items-center justify-center mx-auto mb-4 border border-aero/20">
+                <svg class="w-9 h-9 text-aero/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            </div>
+            <h1 class="text-xl font-light text-white/90 tracking-wide">{{ fileRequest.name }}</h1>
+            {% if fileRequest.description %}
+            <p class="text-white/35 mt-2 text-sm">{{ fileRequest.description }}</p>
+            {% endif %}
+            <p class="text-white/25 mt-2 text-xs">Collecting files for {{ fileRequest.user.name }}</p>
+        </div>
+
+        <div class="glass-light p-4 space-y-2 mb-6 rounded-2xl">
+            <div class="flex justify-between text-sm">
+                <span class="text-white/35">Max files per upload</span>
+                <span class="text-white/70">{{ fileRequest.maxFiles }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-white/35">Max file size</span>
+                <span class="text-white/70">{{ maxFileSize }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-white/35">Expires</span>
+                <span class="text-white/70">{{ fileRequest.expiresAt|date('M j, Y') }}</span>
+            </div>
+        </div>
+
+        {% if needsPassword %}
+        <div id="password-gate" class="mb-6">
+            <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Enter password to upload</label>
+            <div class="relative">
+                <input type="password" id="upload-password" class="form-input w-full mb-3 pr-10" placeholder="Enter the password provided by the requester" onkeydown="if(event.key==='Enter')unlockUpload()">
+                <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition -mt-1.5" title="Show/hide password">
+                    <svg id="eye-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                </button>
+            </div>
+            <button onclick="unlockUpload()" class="aero-btn-primary w-full py-2.5 text-sm">Continue</button>
+        </div>
+        {% endif %}
+
+        <div id="upload-form" class="{{ needsPassword ? 'hidden' : '' }} space-y-5">
+            <div id="drop-zone"
+                class="glass p-10 text-center cursor-pointer transition-all border-2 border-dashed border-white/8 animate-pulse-glow"
+                ondragover="event.preventDefault(); this.classList.add('drop-zone-active')"
+                ondragleave="this.classList.remove('drop-zone-active')"
+                ondrop="event.preventDefault(); this.classList.remove('drop-zone-active'); handleFiles(event.dataTransfer.files)"
+                onclick="document.getElementById('file-input').click()">
+                <svg class="w-12 h-12 text-aero/30 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                <p class="text-white/55 text-base font-light">Drag & drop files here</p>
+                <p class="text-white/25 text-sm mt-1">or click to browse</p>
+            </div>
+            <input type="file" id="file-input" class="hidden" multiple onchange="handleFiles(this.files)">
+            <div id="file-queue" class="space-y-3"></div>
+
+            <div>
+                <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Your Name (optional)</label>
+                <input type="text" id="sender-name" class="form-input w-full" placeholder="Your name">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Your Email *</label>
+                <input type="email" id="sender-email" class="form-input w-full" placeholder="you@example.com" required>
+            </div>
+
+            <button id="upload-btn" onclick="uploadFiles()" class="aero-btn-primary w-full py-3 text-sm" disabled>Upload Files</button>
+        </div>
+
+        <div id="upload-success" class="hidden text-center">
+            <div class="w-14 h-14 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4 border border-success/20">
+                <svg class="w-7 h-7 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <h2 class="text-xl font-light text-white/90 mb-1">Upload Complete</h2>
+            <p class="text-white/35 text-sm">{{ fileRequest.user.name }} will receive your files.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedFiles = [];
+let uploadPassword = '';
+
+function togglePasswordVisibility() {
+    const input = document.getElementById('upload-password');
+    if (input.type === 'password') {
+        input.type = 'text';
+    } else {
+        input.type = 'password';
+    }
+}
+
+function unlockUpload() {
+    const pw = document.getElementById('upload-password').value;
+    if (!pw) { alert('Please enter the password'); return; }
+    uploadPassword = pw;
+    const gate = document.getElementById('password-gate');
+    gate.style.opacity = '0';
+    gate.style.transform = 'translateY(-10px)';
+    gate.style.transition = 'all 0.25s ease';
+    setTimeout(() => {
+        gate.classList.add('hidden');
+        const form = document.getElementById('upload-form');
+        form.classList.remove('hidden');
+        form.style.opacity = '0';
+        form.style.transform = 'translateY(10px)';
+        requestAnimationFrame(() => {
+            form.style.transition = 'all 0.3s ease';
+            form.style.opacity = '1';
+            form.style.transform = 'translateY(0)';
+        });
+    }, 250);
+}
+
+function handleFiles(files) {
+    const queue = document.getElementById('file-queue');
+    const btn = document.getElementById('upload-btn');
+    for (const file of files) {
+        if (selectedFiles.some(f => f.name === file.name && f.size === file.size)) continue;
+        selectedFiles.push(file);
+        const card = document.createElement('div');
+        card.className = 'glass-light p-3 flex items-center gap-3';
+        card.innerHTML = `
+            <svg class="w-4 h-4 text-aero/60 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <div class="flex-1 min-w-0">
+                <p class="text-white/80 text-sm truncate">${file.name}</p>
+                <p class="text-white/30 text-xs">${(file.size / 1048576).toFixed(2)} MB</p>
+            </div>
+        `;
+        queue.appendChild(card);
+    }
+    document.getElementById('file-input').value = '';
+    btn.disabled = selectedFiles.length === 0;
+}
+
+async function uploadFiles() {
+    if (selectedFiles.length === 0) return;
+    const btn = document.getElementById('upload-btn');
+    btn.disabled = true;
+    btn.textContent = 'Uploading...';
+
+    const formData = new FormData();
+    selectedFiles.forEach(file => formData.append('files[]', file));
+    formData.append('sender_name', document.getElementById('sender-name').value);
+    formData.append('sender_email', document.getElementById('sender-email').value);
+    if (uploadPassword) formData.append('password', uploadPassword);
+
+    try {
+        const response = await fetch('/r/{{ token }}/upload', { method: 'POST', body: formData });
+        const data = await response.json();
+        if (data.success) {
+            document.getElementById('upload-form').classList.add('hidden');
+            document.getElementById('upload-success').classList.remove('hidden');
+        } else {
+            alert('Upload failed: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        alert('Upload failed: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Upload Files';
+    }
+}
+</script>
+{% endblock %}

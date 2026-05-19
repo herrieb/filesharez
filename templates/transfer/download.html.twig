@@ -1,0 +1,264 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Download - FileShareZ{% endblock %}
+
+{% block body %}
+<div class="min-h-screen flex items-center justify-center p-4">
+    <div class="glass animate-in p-10 w-full max-w-lg" style="box-shadow: 0 0 80px rgba(108,178,255,0.06), 0 16px 48px rgba(0,0,0,0.5);">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 rounded-2xl bg-aero/10 flex items-center justify-center mx-auto mb-4 border border-aero/20">
+                <svg class="w-9 h-9 text-aero/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <h1 class="text-xl font-light text-white/90 tracking-wide">{{ transfer.originalFilename }}</h1>
+            <p class="text-white/35 mt-1 text-sm">{{ transfer.formattedSize }}{% if transfer.fileCount > 1 %} &middot; {{ transfer.fileCount }} files{% endif %}</p>
+
+            {% if transfer.senderName %}
+            <p class="text-white/25 mt-1 text-xs">Sent by {{ transfer.senderName }}{% if transfer.senderEmail %} ({{ transfer.senderEmail }}){% endif %}</p>
+            {% endif %}
+        </div>
+
+        <div class="glass-light p-4 space-y-3 mb-6 rounded-2xl">
+            <div class="flex justify-between text-sm">
+                <span class="text-white/35">Uploaded by</span>
+                <span class="text-white/70">{{ transfer.user.name }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-white/35">Expires</span>
+                <span class="text-white/70" id="expiry-date">{{ transfer.expiresAt|date('M j, Y H:i') }}</span>
+            </div>
+            {% if transfer.isDownloadable %}
+            <div id="countdown" class="flex justify-between text-sm">
+                <span class="text-white/35">Time remaining</span>
+                <span class="text-aero-glow text-sm font-medium" id="countdown-timer"></span>
+            </div>
+            {% endif %}
+            <div class="flex justify-between text-sm">
+                <span class="text-white/35">Downloads remaining</span>
+                <span class="text-white/70">{{ transfer.remainingDownloads }} / {{ transfer.maxDownloads }}</span>
+            </div>
+        </div>
+
+        {% if transfer.fileCount > 1 %}
+        <div class="glass-light p-4 mb-6 rounded-2xl">
+            <h3 class="text-xs font-medium text-white/40 mb-3 uppercase tracking-wider">Files</h3>
+            <div class="space-y-2">
+                {% for file in transfer.files %}
+                {% set mime = file.mimeType|default('') %}
+                {% set is_previewable = mime starts with 'image/' or mime starts with 'video/' or mime starts with 'audio/' or mime == 'application/pdf' %}
+                <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition">
+                    <svg class="w-4 h-4 text-aero/60 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-white/70 text-sm truncate">{{ file.originalFilename }}</p>
+                    </div>
+                    <span class="text-white/30 text-xs">{{ file.formattedSize }}</span>
+                    {% if is_previewable %}
+                    <button onclick="openPreview('{{ path('app_download_preview', {token: token, fileId: file.id}) }}', '{{ file.mimeType }}', '{{ file.originalFilename|e('js') }}')" class="text-aero hover:text-aero-glow text-xs transition">Preview</button>
+                    {% elseif file.isText %}
+                    <button onclick="openTextPreview('{{ path('app_download_text', {token: token, fileId: file.id}) }}', '{{ file.originalFilename|e('js') }}')" class="text-aero hover:text-aero-glow text-xs transition">Preview</button>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+            {% set file = transfer.files|first %}
+            {% set mime = file.mimeType|default('') %}
+
+            {% if mime starts with 'image/' %}
+            <div class="glass-light p-3 mb-6 rounded-2xl">
+                <img src="{{ path('app_download_preview', {token: token, fileId: file.id}) }}"
+                     alt="{{ file.originalFilename }}"
+                     class="w-full rounded-xl cursor-pointer max-h-80 object-contain"
+                     onclick="window.open(this.src, '_blank')"
+                     loading="lazy">
+            </div>
+            {% elseif mime starts with 'video/' %}
+            <div class="glass-light p-3 mb-6 rounded-2xl">
+                <video controls class="w-full rounded-xl" preload="metadata">
+                    <source src="{{ path('app_download_preview', {token: token, fileId: file.id}) }}" type="{{ mime }}">
+                </video>
+            </div>
+            {% elseif mime starts with 'audio/' %}
+            <div class="glass-light p-4 mb-6 rounded-2xl">
+                <div class="flex items-center gap-3 mb-3">
+                    <svg class="w-8 h-8 text-aero/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+                    <span class="text-white/70 text-sm truncate">{{ file.originalFilename }}</span>
+                </div>
+                <audio controls class="w-full">
+                    <source src="{{ path('app_download_preview', {token: token, fileId: file.id}) }}" type="{{ mime }}">
+                </audio>
+            </div>
+            {% elseif mime == 'application/pdf' %}
+            <div class="glass-light p-3 mb-6 rounded-2xl">
+                <iframe src="{{ path('app_download_preview', {token: token, fileId: file.id}) }}" class="w-full rounded-xl" style="height: 400px;" loading="lazy"></iframe>
+            </div>
+            {% elseif file.isText %}
+            <div id="text-preview" class="glass-light p-4 mb-6 rounded-2xl">
+                <div class="flex items-center gap-2 mb-3">
+                    <svg class="w-4 h-4 text-aero/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                    <span class="text-white/40 text-xs uppercase tracking-wider">Preview</span>
+                </div>
+                <pre id="text-content" class="text-sm text-white/70 overflow-auto max-h-64 font-mono leading-relaxed whitespace-pre-wrap break-words"><code id="code-content" class="language-{{ file.originalFilename|split('.')|last }}">Loading...</code></pre>
+            </div>
+            <script>
+            (async () => {
+                try {
+                    const res = await fetch('{{ path('app_download_text', {token: token, fileId: file.id}) }}');
+                    const data = await res.json();
+                    const code = document.getElementById('code-content');
+                    code.textContent = data.content || '(empty file)';
+                    if (typeof hljs !== 'undefined') { hljs.highlightElement(code); }
+                } catch(e) { document.getElementById('text-content').textContent = 'Preview unavailable'; }
+            })();
+            </script>
+            {% endif %}
+        {% endif %}
+
+        {% if needsPassword %}
+        <form method="POST" action="{{ path('app_download_file', {token: token, fileId: transfer.files.first.id}) }}" class="mb-4">
+            <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Enter password to download</label>
+            <input type="password" name="password" required class="form-input w-full mb-4" placeholder="Enter download password">
+        {% if transfer.fileCount > 1 %}
+            <div class="flex gap-3">
+                <button type="submit" class="aero-btn-primary flex-1 py-3 text-sm">Download ZIP</button>
+            </div>
+            <p class="text-white/15 text-xs text-center mt-3 font-light">or download individual files below</p>
+            <div class="mt-4 space-y-2">
+                {% for file in transfer.files %}
+                <form method="POST" action="{{ path('app_download_file', {token: token, fileId: file.id}) }}" class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition">
+                    <input type="hidden" name="password" value="">
+                    <svg class="w-4 h-4 text-aero/60 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span class="text-white/70 text-sm truncate flex-1">{{ file.originalFilename }}</span>
+                    <span class="text-white/30 text-xs">{{ file.formattedSize }}</span>
+                    <button type="submit" class="text-aero hover:text-aero-glow text-xs">Save</button>
+                </form>
+                {% endfor %}
+            </div>
+        {% else %}
+            <button type="submit" class="aero-btn-primary w-full py-3 text-sm">Download File</button>
+        {% endif %}
+        </form>
+        {% else %}
+        {% if transfer.fileCount > 1 %}
+            <a href="{{ path('app_download_zip', {token: token}) }}" class="aero-btn-primary block text-center w-full py-3 text-sm mb-3">
+                Download All ({{ transfer.fileCount }} files)
+            </a>
+            <p class="text-white/15 text-xs text-center mb-4 font-light">or download individual files:</p>
+            <div class="space-y-2">
+                {% for file in transfer.files %}
+                <a href="{{ path('app_download_file', {token: token, fileId: file.id}) }}" class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition group">
+                    <svg class="w-4 h-4 text-aero/60 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span class="text-white/70 text-sm truncate flex-1">{{ file.originalFilename }}</span>
+                    <span class="text-white/30 text-xs">{{ file.formattedSize }}</span>
+                    <svg class="w-3 h-3 text-white/20 group-hover:text-aero transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <a href="{{ path('app_download_file', {token: token, fileId: transfer.files.first.id}) }}" class="aero-btn-primary block text-center w-full py-3 text-sm">
+                Download File
+            </a>
+        {% endif %}
+        {% endif %}
+
+        <p class="text-white/15 text-xs text-center mt-6 font-light">This link will expire and can only be downloaded {{ transfer.maxDownloads }} time{{ transfer.maxDownloads > 1 ? 's' : '' }}.</p>
+    </div>
+</div>
+
+<div id="preview-modal" class="hidden fixed inset-0 z-50 bg-black/90 flex items-center justify-center" onclick="closePreview(event)">
+    <button onclick="closePreview(event)" class="absolute top-4 right-4 text-white/60 hover:text-white transition z-10">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+    <div id="preview-content" class="max-w-5xl w-full max-h-[90vh] overflow-auto p-4"></div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" integrity="sha512-r1+0X4j8cz7yyWFRtiC2+zsAS3B0skV5Eip80Gz0yCQ4Fqo4ZJ2nPs7ajnSLYqZG4Vi4nJ2t8dFq2EaU5wYw==" crossorigin="anonymous">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" integrity="sha512-D9gZ4s7R6QZU2X7Ds5E8F0LpQ1Znrz6W9G5k5LdD3Vl25x5sv7Fo/RPq8eOep3D8L8MZv43lP2j2xqR9m3xH2A==" crossorigin="anonymous"></script>
+
+<script>
+function openPreview(url, mimeType, filename) {
+    const modal = document.getElementById('preview-modal');
+    const content = document.getElementById('preview-content');
+
+    if (mimeType.startsWith('image/')) {
+        content.innerHTML = '<img src="' + url + '" alt="' + filename + '" class="max-w-full max-h-[85vh] mx-auto rounded-lg">';
+    } else if (mimeType.startsWith('video/')) {
+        content.innerHTML = '<video controls class="max-w-full max-h-[85vh] mx-auto rounded-lg"><source src="' + url + '" type="' + mimeType + '"></video>';
+    } else if (mimeType.startsWith('audio/')) {
+        content.innerHTML = '<div class="glass p-8 text-center"><p class="text-white/70 mb-4">' + filename + '</p><audio controls class="w-full"><source src="' + url + '" type="' + mimeType + '"></audio></div>';
+    } else if (mimeType === 'application/pdf') {
+        content.innerHTML = '<iframe src="' + url + '" class="w-full rounded-lg" style="height:85vh;"></iframe>';
+    }
+
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+async function openTextPreview(url, filename) {
+    const modal = document.getElementById('preview-modal');
+    const content = document.getElementById('preview-content');
+
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const ext = filename.split('.').pop() || 'text';
+        content.innerHTML = '<div class="glass p-6"><div class="flex items-center gap-2 mb-3"><svg class="w-4 h-4 text-aero/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg><span class="text-white/40 text-xs uppercase tracking-wider">' + filename + '</span></div><pre class="text-sm text-white/70 overflow-auto max-h-[70vh] font-mono leading-relaxed whitespace-pre-wrap break-words"><code class="language-' + ext + '">' + (data.content || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</code></pre></div>';
+        if (typeof hljs !== 'undefined') {
+            const code = content.querySelector('code');
+            if (code) hljs.highlightElement(code);
+        }
+    } catch(e) {
+        content.innerHTML = '<div class="glass p-8 text-center"><p class="text-white/50">Preview unavailable</p></div>';
+    }
+
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closePreview(event) {
+    if (event.target === document.getElementById('preview-modal') || event.target.closest('button')) {
+        document.getElementById('preview-modal').classList.add('hidden');
+        document.body.style.overflow = '';
+        const content = document.getElementById('preview-content');
+        content.innerHTML = '';
+    }
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        document.getElementById('preview-modal').classList.add('hidden');
+        document.body.style.overflow = '';
+        document.getElementById('preview-content').innerHTML = '';
+    }
+});
+
+(function() {
+    const expiryEl = document.getElementById('expiry-date');
+    if (!expiryEl) return;
+    const expiryStr = '{{ transfer.expiresAt|date('c') }}';
+    const expiryDate = new Date(expiryStr);
+    const timerEl = document.getElementById('countdown-timer');
+
+    function update() {
+        if (!timerEl) return;
+        const now = new Date();
+        const diff = expiryDate - now;
+        if (diff <= 0) {
+            timerEl.textContent = 'Expired';
+            return;
+        }
+        const days = Math.floor(diff / 86400000);
+        const hours = Math.floor((diff % 86400000) / 3600000);
+        const mins = Math.floor((diff % 3600000) / 60000);
+        const secs = Math.floor((diff % 60000) / 1000);
+        let parts = [];
+        if (days > 0) parts.push(days + 'd');
+        if (hours > 0 || days > 0) parts.push(hours + 'h');
+        parts.push(mins + 'm ' + secs + 's');
+        timerEl.textContent = parts.join(' ');
+    }
+    update();
+    setInterval(update, 1000);
+})();
+</script>
+{% endblock %}

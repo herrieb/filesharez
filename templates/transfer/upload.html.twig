@@ -1,0 +1,296 @@
+{% extends 'app_layout.html.twig' %}
+
+{% block title %}Upload - FileShareZ{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-7">
+    <div class="animate-in">
+        <h1 class="text-2xl font-light tracking-wide text-white/90">Upload</h1>
+        <p class="text-white/35 mt-1 text-sm">Share files securely with expiring download links</p>
+    </div>
+
+    <div x-data="{ mode: 'file' }" class="space-y-5">
+        <div class="flex gap-2">
+            <button @click="mode = 'file'"
+                :class="mode === 'file' ? 'aero-btn-primary' : 'aero-btn'"
+                class="px-5 py-2 text-sm transition">
+                File Upload
+            </button>
+            <button @click="mode = 'text'"
+                :class="mode === 'text' ? 'aero-btn-primary' : 'aero-btn'"
+                class="px-5 py-2 text-sm transition">
+                Text Upload
+            </button>
+        </div>
+
+        <div x-show="mode === 'file'" x-transition>
+            <div id="drop-zone"
+                class="glass p-12 text-center cursor-pointer transition-all border-2 border-dashed border-white/8 animate-pulse-glow"
+                ondragover="event.preventDefault(); this.classList.add('drop-zone-active')"
+                ondragleave="this.classList.remove('drop-zone-active')"
+                ondrop="event.preventDefault(); this.classList.remove('drop-zone-active'); handleFiles(event.dataTransfer.files)"
+                onclick="document.getElementById('file-input').click()">
+                <svg class="w-14 h-14 text-aero/30 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                <p class="text-white/55 text-base font-light">Drag & drop files here</p>
+                <p class="text-white/25 text-sm mt-1">or click to browse — select multiple files</p>
+                <p class="text-white/15 text-xs mt-3">Up to 20GB per file</p>
+            </div>
+            <input type="file" id="file-input" class="hidden" multiple onchange="handleFiles(this.files)">
+            <div id="file-queue" class="mt-5 space-y-3"></div>
+
+            <div id="upload-progress" class="hidden mt-5 glass-panel p-5 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-white/60 text-sm font-medium">Uploading...</span>
+                    <span id="progress-percent" class="text-aero text-sm font-medium">0%</span>
+                </div>
+                <div class="progress-bar-track">
+                    <div id="progress-fill" class="progress-bar-fill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div id="upload-options" class="hidden mt-5 glass-panel p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Max Downloads</label>
+                        <input type="number" id="file-max-downloads" value="1" min="1" max="100" class="form-input w-full">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Expires in (days)</label>
+                        <input type="number" id="file-expiry-days" value="7" min="1" max="30" class="form-input w-full">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Password (optional)</label>
+                    <input type="password" id="file-password" class="form-input w-full" placeholder="Leave empty for no password">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Recipient Email (optional)</label>
+                    <input type="email" id="file-recipient-email" class="form-input w-full" placeholder="email@example.com">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Message (optional)</label>
+                    <textarea id="file-message" class="form-input w-full" rows="3" placeholder="Add a message..."></textarea>
+                </div>
+                <button id="upload-btn" onclick="uploadAllFiles()" class="aero-btn-primary w-full py-3 text-sm">
+                    Upload Files
+                </button>
+            </div>
+        </div>
+
+        <div x-show="mode === 'text'" x-transition class="hidden">
+            <form id="text-upload-form" class="glass p-8 space-y-5">
+                <div class="window-header -mt-8 -mx-8 mb-6">
+                    <span class="text-xs text-white/40 uppercase tracking-wider">Text Upload</span>
+                    <span></span>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Filename</label>
+                    <input type="text" id="text-filename" class="form-input w-full" placeholder="notes.txt" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Content</label>
+                    <textarea id="text-content" class="form-input w-full" rows="10" placeholder="Enter your text content..." required></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Max Downloads</label>
+                        <input type="number" id="text-max-downloads" value="1" min="1" max="100" class="form-input w-full">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Expires in (days)</label>
+                        <input type="number" id="text-expiry-days" value="7" min="1" max="30" class="form-input w-full">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Password (optional)</label>
+                    <input type="password" id="text-password" class="form-input w-full" placeholder="Leave empty for no password">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Recipient Email (optional)</label>
+                    <input type="email" id="text-recipient-email" class="form-input w-full" placeholder="email@example.com">
+                </div>
+                <button type="submit" id="text-upload-btn" class="aero-btn-primary w-full py-3 text-sm">
+                    Create Text Download Link
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="upload-success" class="hidden glass p-8 text-center animate-in">
+        <div class="w-14 h-14 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4 border border-success/20">
+            <svg class="w-7 h-7 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <h2 class="text-xl font-light text-white/90 mb-1">Upload Complete</h2>
+        <p id="success-details" class="text-white/35 text-sm mb-5"></p>
+        <div id="success-qr" class="flex justify-center mb-5"></div>
+        <div class="glass-light p-4 mb-4">
+            <a id="success-url" href="#" class="text-aero hover:text-aero-glow break-all text-sm" target="_blank"></a>
+        </div>
+        <div class="flex gap-3 justify-center">
+            <button onclick="navigator.clipboard.writeText(document.getElementById('success-url').href); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy Link', 2000)"
+                class="aero-btn-primary px-8 py-3 text-sm">
+                Copy Link
+            </button>
+            <button onclick="resetUploadForm()" class="aero-btn px-8 py-3 text-sm">
+                Upload More
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedFiles = [];
+
+function handleFiles(files) {
+    const queue = document.getElementById('file-queue');
+    const options = document.getElementById('upload-options');
+    options.classList.remove('hidden');
+    for (const file of files) {
+        if (selectedFiles.some(f => f.name === file.name && f.size === file.size)) continue;
+        selectedFiles.push(file);
+        const card = document.createElement('div');
+        card.className = 'glass-light p-4 flex items-center gap-4 animate-in';
+        card.dataset.fileName = file.name;
+        card.dataset.fileSize = file.size;
+        card.innerHTML = `
+            <div class="w-10 h-10 rounded-xl bg-aero/10 flex items-center justify-center flex-shrink-0 border border-aero/20">
+                <svg class="w-5 h-5 text-aero/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-white/80 font-medium truncate text-sm">${file.name}</p>
+                <p class="text-white/35 text-xs">${(file.size / 1048576).toFixed(2)} MB</p>
+            </div>
+            <button class="text-white/20 hover:text-danger transition" onclick="removeFile(this, '${file.name.replace(/'/g, "\\'")}', ${file.size})">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        `;
+        queue.appendChild(card);
+    }
+    document.getElementById('file-input').value = '';
+}
+
+function removeFile(btn, name, size) {
+    selectedFiles = selectedFiles.filter(f => !(f.name === name && f.size === size));
+    btn.closest('.glass-light').remove();
+    if (selectedFiles.length === 0) {
+        document.getElementById('upload-options').classList.add('hidden');
+    }
+}
+
+async function uploadAllFiles() {
+    if (selectedFiles.length === 0) { alert('Please select at least one file'); return; }
+    const btn = document.getElementById('upload-btn');
+    const progressDiv = document.getElementById('upload-progress');
+    const progressFill = document.getElementById('progress-fill');
+    const progressPercent = document.getElementById('progress-percent');
+
+    btn.disabled = true;
+    btn.textContent = 'Uploading...';
+    progressDiv.classList.remove('hidden');
+    progressFill.style.width = '0%';
+    progressPercent.textContent = '0%';
+
+    const formData = new FormData();
+    selectedFiles.forEach(file => formData.append('files[]', file));
+    formData.append('max_downloads', document.getElementById('file-max-downloads')?.value || '1');
+    formData.append('expiry_days', document.getElementById('file-expiry-days')?.value || '7');
+    formData.append('password', document.getElementById('file-password')?.value || '');
+    formData.append('recipient_email', document.getElementById('file-recipient-email')?.value || '');
+    formData.append('message', document.getElementById('file-message')?.value || '');
+
+    try {
+        const xhr = new XMLHttpRequest();
+        const promise = new Promise((resolve, reject) => {
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const pct = Math.round((e.loaded / e.total) * 100);
+                    progressFill.style.width = pct + '%';
+                    progressPercent.textContent = pct + '%';
+                }
+            });
+            xhr.addEventListener('load', () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    resolve(JSON.parse(xhr.responseText));
+                } else {
+                    try { reject(JSON.parse(xhr.responseText)); } catch { reject({ error: 'Upload failed' }); }
+                }
+            });
+            xhr.addEventListener('error', () => reject({ error: 'Network error' }));
+        });
+
+        xhr.open('POST', '/upload/file');
+        xhr.send(formData);
+        const data = await promise;
+
+        if (data.success) {
+            progressFill.style.width = '100%';
+            progressPercent.textContent = '100%';
+            setTimeout(() => {
+                progressDiv.classList.add('hidden');
+                const details = data.transfer.fileCount > 1
+                    ? data.transfer.fileCount + ' files uploaded (' + data.transfer.totalSize + ')'
+                    : 'File uploaded successfully';
+                showSuccess(data.transfer.downloadUrl, details);
+            }, 500);
+        } else {
+            progressDiv.classList.add('hidden');
+            alert('Upload failed: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        progressDiv.classList.add('hidden');
+        alert('Upload failed: ' + (error.error || error.message || 'Unknown error'));
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Upload Files';
+    }
+}
+
+function showSuccess(url, details) {
+    const success = document.getElementById('upload-success');
+    document.getElementById('success-url').href = url;
+    document.getElementById('success-url').textContent = url;
+    document.getElementById('success-details').textContent = details || 'Your file is ready to share';
+    const qrDiv = document.getElementById('success-qr');
+    qrDiv.innerHTML = '';
+    if (typeof QRCode !== 'undefined') {
+        new QRCode(qrDiv, { text: url, width: 120, height: 120, colorDark: '#8EC5FF', colorLight: 'transparent', correctLevel: QRCode.CorrectLevel.M });
+    }
+    success.classList.remove('hidden');
+    success.scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetUploadForm() {
+    document.getElementById('upload-success').classList.add('hidden');
+    document.getElementById('file-queue').innerHTML = '';
+    document.getElementById('upload-options').classList.add('hidden');
+    selectedFiles = [];
+}
+
+document.getElementById('text-upload-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('text-upload-btn');
+    btn.disabled = true;
+    btn.textContent = 'Creating...';
+
+    const formData = new FormData();
+    formData.append('filename', document.getElementById('text-filename').value);
+    formData.append('content', document.getElementById('text-content').value);
+    formData.append('max_downloads', document.getElementById('text-max-downloads').value);
+    formData.append('expiry_days', document.getElementById('text-expiry-days').value);
+    formData.append('password', document.getElementById('text-password').value);
+    formData.append('recipient_email', document.getElementById('text-recipient-email').value);
+    formData.append('message', '');
+    try {
+        const response = await fetch('/upload/text', { method: 'POST', body: formData });
+        const data = await response.json();
+        if (data.success) { showSuccess(data.transfer.downloadUrl); }
+        else { alert('Upload failed: ' + (data.error || 'Unknown error')); }
+    } catch (error) { alert('Upload failed: ' + error.message); }
+    finally {
+        btn.disabled = false;
+        btn.textContent = 'Create Text Download Link';
+    }
+});
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-C3AI2BB7K1P7ni7fnRzY2K/C3Kxd9e6X4m64n2GZAgL7qRyJdx6j2L1RP3eD8hMZ9Zz3h47CJq4" crossorigin="anonymous"></script>
+{% endblock %}

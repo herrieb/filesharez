@@ -1,0 +1,137 @@
+{% extends 'app_layout.html.twig' %}
+
+{% block title %}Transfers - FileShareZ{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-7">
+    <div class="flex items-center justify-between animate-in">
+        <div>
+            <h1 class="text-2xl font-light tracking-wide text-white/90">Transfers</h1>
+            <p class="text-white/35 mt-1 text-sm">Manage your file transfers</p>
+        </div>
+        <a href="{{ path('app_upload') }}" class="aero-btn-primary px-5 py-2.5 text-sm flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            New Upload
+        </a>
+    </div>
+
+    {% if transfers|length > 0 %}
+    <div class="glass animate-in" style="animation-delay: 0.1s">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="text-white/30 text-xs uppercase tracking-wider border-b border-white/5">
+                        <th class="px-6 py-3.5 text-left">Filename</th>
+                        <th class="px-6 py-3.5 text-left">Size</th>
+                        <th class="px-6 py-3.5 text-left">Downloads</th>
+                        <th class="px-6 py-3.5 text-left">Expires</th>
+                        <th class="px-6 py-3.5 text-left">Status</th>
+                        <th class="px-6 py-3.5 text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transfer in transfers %}
+                    <tr class="border-b border-white/5 hover:bg-white/[0.03] transition" id="transfer-{{ transfer.id }}">
+                        <td class="px-6 py-3.5">
+                            <div class="flex items-center gap-2">
+                                <span class="text-white/80 font-medium text-sm">{{ transfer.originalFilename }}</span>
+                                {% if transfer.fileRequest %}
+                                    <span class="text-[10px] bg-purple-500/15 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/20">Request</span>
+                                {% endif %}
+                                {% if transfer.fileCount > 1 %}
+                                    <span class="text-[10px] bg-aero/15 text-aero px-2 py-0.5 rounded-full border border-aero/20">{{ transfer.fileCount }} files</span>
+                                {% elseif transfer.isText %}
+                                    <span class="text-[10px] bg-aero/15 text-aero px-2 py-0.5 rounded-full border border-aero/20">Text</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-3.5 text-white/45 text-sm">{{ transfer.formattedSize }}</td>
+                        <td class="px-6 py-3.5 text-white/45 text-sm">{{ transfer.downloadCount }}/{{ transfer.maxDownloads }}</td>
+                        <td class="px-6 py-3.5 text-white/45 text-sm">{{ transfer.expiresAt|date('M j, Y') }}</td>
+                        <td class="px-6 py-3.5" id="status-{{ transfer.id }}">
+                            {% if transfer.isDownloadable %}
+                                <span class="status-badge status-active">Active</span>
+                            {% elseif transfer.isExpired %}
+                                <span class="status-badge status-expired">Expired</span>
+                            {% elseif transfer.isRevoked %}
+                                <span class="status-badge status-revoked">Revoked</span>
+                            {% else %}
+                                <span class="status-badge status-exhausted">Exhausted</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-3.5">
+                            <div class="flex gap-2">
+                                <button onclick="copyLink('{{ transfer.id }}')" class="text-white/25 hover:text-aero transition p-1" title="Copy link">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 0H10m0 0V9m0 4h2m4-4v3"/></svg>
+                                </button>
+                                <button onclick="extendTransfer('{{ transfer.id }}', this)" class="text-white/25 hover:text-success transition p-1" title="Extend +7 days">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </button>
+                                {% if transfer.isDownloadable %}
+                                <button onclick="revokeTransfer('{{ transfer.id }}', this)" class="text-white/25 hover:text-warn transition p-1" title="Revoke">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                                </button>
+                                {% endif %}
+                                <button onclick="deleteTransfer('{{ transfer.id }}', this)" class="text-white/25 hover:text-danger transition p-1" title="Delete">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="glass p-16 text-center animate-in">
+        <svg class="w-16 h-16 text-white/8 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <h3 class="text-lg font-light text-white/50">No transfers yet</h3>
+        <p class="text-white/25 mt-1 text-sm">Upload a file to create your first transfer</p>
+        <a href="{{ path('app_upload') }}" class="aero-btn-primary inline-block mt-6 px-7 py-2.5 text-sm">Upload Now</a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+const transferTokens = {{ {
+} | json_encode | raw }};
+{% for transfer in transfers %}transferTokens['{{ transfer.id }}'] = '{{ transfer.rawToken ?? '' }}';{% endfor %}
+
+function copyLink(id) {
+    const token = transferTokens[id];
+    if (!token) { alert('Link not available — created before this session'); return; }
+    const url = window.location.origin + '/d/' + token;
+    navigator.clipboard.writeText(url);
+    const btn = event.currentTarget;
+    btn.innerHTML = '<svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+    setTimeout(() => { btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 0H10m0 0V9m0 4h2m4-4v3"/></svg>'; }, 2000);
+}
+
+async function extendTransfer(id, btn) {
+    btn.disabled = true;
+    try {
+        const res = await fetch('/transfers/' + id + '/extend', { method: 'POST' });
+        if (res.ok) { location.reload(); } else { alert('Failed to extend'); btn.disabled = false; }
+    } catch(e) { alert('Network error'); btn.disabled = false; }
+}
+
+async function revokeTransfer(id, btn) {
+    if (!confirm('Revoke this transfer? It will no longer be downloadable.')) return;
+    btn.disabled = true;
+    try {
+        const res = await fetch('/transfers/' + id + '/revoke', { method: 'POST' });
+        if (res.ok) { location.reload(); } else { alert('Failed to revoke'); btn.disabled = false; }
+    } catch(e) { alert('Network error'); btn.disabled = false; }
+}
+
+async function deleteTransfer(id, btn) {
+    if (!confirm('Delete this transfer permanently? This cannot be undone.')) return;
+    btn.disabled = true;
+    try {
+        const res = await fetch('/transfers/' + id + '/delete', { method: 'POST' });
+        if (res.ok) { document.getElementById('transfer-' + id)?.remove(); } else { alert('Failed to delete'); btn.disabled = false; }
+    } catch(e) { alert('Network error'); btn.disabled = false; }
+}
+</script>
+{% endblock %}

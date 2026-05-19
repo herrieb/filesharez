@@ -1,0 +1,11 @@
+{% extends 'form_div_layout.html.twig' %}
+
+{% block form_widget_simple %}
+    {%- set attr = attr|merge({'class': (attr.class|default('') ~ ' form-input')|trim}) -%}
+    {{- parent() -}}
+{% endblock %}
+
+{% block form_label %}
+    {%- set label_attr = label_attr|merge({'class': (label_attr.class|default('') ~ ' block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider')|trim}) -%}
+    {{- parent() -}}
+{% endblock %}

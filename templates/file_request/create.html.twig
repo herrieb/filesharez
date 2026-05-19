@@ -1,0 +1,96 @@
+{% extends 'app_layout.html.twig' %}
+
+{% block title %}Create File Request - FileShareZ{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-7">
+    <div class="animate-in">
+        <h1 class="text-2xl font-light tracking-wide text-white/90">Create File Request</h1>
+        <p class="text-white/35 mt-1 text-sm">Generate a link where others can upload files to you</p>
+    </div>
+
+    <form id="create-request-form" class="glass p-8 space-y-5">
+        <div class="window-header -mt-8 -mx-8 mb-6">
+            <span class="text-xs text-white/40 uppercase tracking-wider">New Request</span>
+            <span></span>
+        </div>
+
+        <div>
+            <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Request Name</label>
+            <input type="text" id="fr-name" class="form-input w-full" placeholder="e.g. Resume Collection, Project Assets" required>
+        </div>
+
+        <div>
+            <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Description (optional)</label>
+            <textarea id="fr-description" class="form-input w-full" rows="3" placeholder="Add instructions for uploaders..."></textarea>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+            <div>
+                <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Max Uploads</label>
+                <input type="number" id="fr-max-files" class="form-input w-full" value="10" min="1" max="100">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Expires (days)</label>
+                <input type="number" id="fr-expiry-days" class="form-input w-full" value="30" min="1" max="90">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Password (optional)</label>
+                <input type="password" id="fr-password" class="form-input w-full" placeholder="Optional">
+            </div>
+        </div>
+
+        <p class="text-white/20 text-xs">Max file size: 1 GB per file &middot; 5 GB total per request</p>
+
+        <button type="submit" id="create-btn" class="aero-btn-primary w-full py-3 text-sm">Create Request Link</button>
+    </form>
+
+    <div id="success-panel" class="hidden glass p-8 text-center animate-in">
+        <div class="w-14 h-14 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4 border border-success/20">
+            <svg class="w-7 h-7 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <h2 class="text-xl font-light text-white/90 mb-1">Request Created</h2>
+        <p class="text-white/35 text-sm mb-5">Share this link to receive files</p>
+        <div class="glass-light p-4 mb-4">
+            <a id="success-url" href="#" class="text-aero hover:text-aero-glow break-all text-sm" target="_blank"></a>
+        </div>
+        <button onclick="navigator.clipboard.writeText(document.getElementById('success-url').href); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy Link', 2000)" class="aero-btn-primary px-8 py-3 text-sm">Copy Link</button>
+    </div>
+</div>
+
+<script>
+document.getElementById('create-request-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('create-btn');
+    btn.disabled = true;
+    btn.textContent = 'Creating...';
+
+    const formData = new FormData();
+    formData.append('name', document.getElementById('fr-name').value);
+    formData.append('description', document.getElementById('fr-description').value);
+    formData.append('max_files', document.getElementById('fr-max-files').value);
+    formData.append('expiry_days', document.getElementById('fr-expiry-days').value);
+    formData.append('password', document.getElementById('fr-password').value);
+
+    try {
+        const response = await fetch('/file-requests/create', { method: 'POST', body: formData });
+        const data = await response.json();
+        if (data.success) {
+            const panel = document.getElementById('success-panel');
+            document.getElementById('success-url').href = data.fileRequest.uploadUrl;
+            document.getElementById('success-url').textContent = data.fileRequest.uploadUrl;
+            panel.classList.remove('hidden');
+            document.getElementById('create-request-form').classList.add('hidden');
+            panel.scrollIntoView({ behavior: 'smooth' });
+        } else {
+            alert('Failed: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        alert('Failed: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Create Request Link';
+    }
+});
+</script>
+{% endblock %}

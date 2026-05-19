@@ -1,0 +1,30 @@
+parameters:
+    app.storage_driver: '%env(STORAGE_DRIVER)%'
+    app.max_upload_size: '%env(MAX_UPLOAD_SIZE)%'
+    app.default_expiry_days: '%env(int:DEFAULT_EXPIRY_DAYS)%'
+    app.default_max_downloads: '%env(int:DEFAULT_MAX_DOWNLOADS)%'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    App\Controller\:
+        resource: '../src/Controller/'
+        tags: ['controller.service_arguments']
+
+    App\Storage\LocalStorage:
+        arguments:
+            $storagePath: '/app/storage'
+
+    App\Service\TransferService:
+        arguments:
+            $defaultExpiryDays: '%app.default_expiry_days%'
+            $defaultMaxDownloads: '%app.default_max_downloads%'

@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Login - FileShareZ{% endblock %}
+
+{% block body %}
+<div class="min-h-screen flex items-center justify-center p-4">
+    <div class="glass animate-in p-10 w-full max-w-md" style="animation-delay: 0.1s; box-shadow: 0 0 60px rgba(108,178,255,0.08), 0 16px 48px rgba(0,0,0,0.5);">
+        <div class="text-center mb-10">
+            <div class="taskbar-orb mx-auto mb-5" style="width:56px;height:56px;cursor:default;">
+                <svg class="w-7 h-7 text-aero" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            </div>
+            <h1 class="text-2xl font-light tracking-wide text-white/90">FileShareZ</h1>
+            <p class="text-white/35 mt-2 text-sm font-light">Sign in to your account</p>
+        </div>
+
+        {% if error %}
+            <div class="mb-6 glass-panel p-4 border-l-2 border-l-danger">
+                <p class="text-danger text-sm">{{ error.messageKey|trans(error.messageData, 'security') }}</p>
+            </div>
+        {% endif %}
+
+        <form action="{{ path('app_login') }}" method="post" class="space-y-5">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+            <div>
+                <label class="block text-xs font-medium text-white/40 mb-1.5 tracking-wide uppercase">Email</label>
+                <input type="email" name="email" value="{{ last_username }}" required autofocus
+                    class="form-input w-full" placeholder="Enter your email">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-white/40 mb-1.5 tracking-wide uppercase">Password</label>
+                <input type="password" name="password" required
+                    class="form-input w-full" placeholder="Enter your password">
+            </div>
+            <button type="submit" class="aero-btn-primary w-full py-3 text-base">
+                Sign in
+            </button>
+        </form>
+
+        <p class="text-center text-white/20 text-xs mt-8 font-light">By invitation only. Contact your admin.</p>
+    </div>
+</div>
+{% endblock %}

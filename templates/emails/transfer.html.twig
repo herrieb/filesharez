@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background: #1B1E24; font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #1B1E24; min-height: 100vh;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+                    <tr>
+                        <td align="center" style="padding: 20px 0 30px;">
+                            <h1 style="color: #8EC5FF; font-size: 24px; font-weight: 300; margin: 0; letter-spacing: 0.05em;">FileShareZ</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 40px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="text-align: center; padding-bottom: 20px;">
+                                        <div style="width: 56px; height: 56px; background: rgba(108,178,255,0.1); border: 1px solid rgba(108,178,255,0.2); border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                                            <span style="font-size: 28px;">&#128206;</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align: center; padding-bottom: 8px;">
+                                        <h2 style="color: #E5E7EB; font-size: 20px; font-weight: 300; margin: 0; letter-spacing: 0.02em;">
+                                            {{ senderName }} sent you {% if fileCount > 1 %}{{ fileCount }} files{% else %}a file{% endif %}
+                                        </h2>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align: center; padding-bottom: 24px;">
+                                        <p style="color: rgba(255,255,255,0.4); font-size: 14px; margin: 0;">
+                                            {{ transfer.originalFilename }} &middot; {{ transfer.formattedSize }}
+                                        </p>
+                                    </td>
+                                </tr>
+                                {% if message %}
+                                <tr>
+                                    <td style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                                        <p style="color: rgba(255,255,255,0.55); font-size: 14px; margin: 0; font-style: italic;">"{{ message }}"</p>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% if fileCount > 1 %}
+                                <tr>
+                                    <td style="padding-bottom: 24px;">
+                                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 12px;">
+                                            {% for file in transfer.files %}
+                                            <tr>
+                                                <td style="padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; color: rgba(255,255,255,0.6);">
+                                                    {{ file.originalFilename }} <span style="color: rgba(255,255,255,0.3);">{{ file.formattedSize }}</span>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </table>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td align="center" style="padding: 20px 0;">
+                                        <a href="{{ downloadUrl }}" style="display: inline-block; background: linear-gradient(180deg, rgba(108,178,255,0.35), rgba(108,178,255,0.12)); border: 1px solid rgba(108,178,255,0.35); color: #8EC5FF; text-decoration: none; font-size: 15px; font-weight: 500; padding: 14px 44px; border-radius: 14px; box-shadow: 0 0 20px rgba(108,178,255,0.2);">{% if fileCount > 1 %}Download All Files{% else %}Download File{% endif %}</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align: center; padding-top: 20px;">
+                                        <p style="color: rgba(255,255,255,0.25); font-size: 12px; margin: 0;">
+                                            This link expires {{ transfer.expiresAt|date('M j, Y H:i') }}
+                                            <br>Downloads remaining: {{ transfer.remainingDownloads }} / {{ transfer.maxDownloads }}
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: center; padding: 30px 0;">
+                            <p style="color: rgba(255,255,255,0.15); font-size: 11px; margin: 0; letter-spacing: 0.05em;">
+                                Sent via FileShareZ &middot; Secure file sharing
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

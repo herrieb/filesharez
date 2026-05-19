@@ -1,0 +1,44 @@
+monolog:
+    channels:
+        - security
+        - uploads
+        - downloads
+        - cleanup
+        - mail
+
+    handlers:
+        main:
+            type: stream
+            path: '%kernel.logs_dir%/%kernel.environment%.log'
+            level: debug
+            channels: ['!security', '!uploads', '!downloads', '!cleanup', '!mail']
+
+        security:
+            type: stream
+            path: '%kernel.logs_dir%/security.log'
+            level: info
+            channels: [security]
+
+        uploads:
+            type: stream
+            path: '%kernel.logs_dir%/uploads.log'
+            level: info
+            channels: [uploads]
+
+        downloads:
+            type: stream
+            path: '%kernel.logs_dir%/downloads.log'
+            level: info
+            channels: [downloads]
+
+        cleanup:
+            type: stream
+            path: '%kernel.logs_dir%/cleanup.log'
+            level: info
+            channels: [cleanup]
+
+        mail:
+            type: stream
+            path: '%kernel.logs_dir%/mail.log'
+            level: info
+            channels: [mail]

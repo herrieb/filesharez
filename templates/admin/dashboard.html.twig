@@ -1,0 +1,91 @@
+{% extends 'app_layout.html.twig' %}
+
+{% block title %}Admin - FileShareZ{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-7">
+    <div class="animate-in">
+        <h1 class="text-2xl font-light tracking-wide text-white/90">Admin Dashboard</h1>
+        <p class="text-white/35 mt-1 text-sm">System overview and management</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="glass-panel p-5 animate-in" style="animation-delay: 0.1s">
+            <p class="text-white/35 text-xs uppercase tracking-wider mb-1">Users</p>
+            <p class="text-3xl font-light text-aero-glow">{{ userCount }}</p>
+        </div>
+        <div class="glass-panel p-5 animate-in" style="animation-delay: 0.15s">
+            <p class="text-white/35 text-xs uppercase tracking-wider mb-1">Transfers</p>
+            <p class="text-3xl font-light text-white/80">{{ activeTransfers }}</p>
+        </div>
+        <div class="glass-panel p-5 animate-in" style="animation-delay: 0.2s">
+            <p class="text-white/35 text-xs uppercase tracking-wider mb-1">File Requests</p>
+            <p class="text-3xl font-light text-white/80">{{ fileRequestCount }}</p>
+        </div>
+        <div class="glass-panel p-5 animate-in" style="animation-delay: 0.25s">
+            <p class="text-white/35 text-xs uppercase tracking-wider mb-1">Storage Used</p>
+            <p class="text-3xl font-light text-white/80">
+                {{ totalStorage > 1073741824 ? (totalStorage / 1073741824)|number_format(1) ~ ' GB' : (totalStorage / 1048576)|number_format(1) ~ ' MB' }}
+            </p>
+        </div>
+    </div>
+
+    <div class="glass-panel p-6 animate-in" style="animation-delay: 0.3s">
+        <h2 class="text-sm font-medium text-white/50 uppercase tracking-wider mb-5">Quick Actions</h2>
+        <div class="flex gap-3 flex-wrap">
+            <a href="{{ path('app_admin_users') }}" class="aero-btn-primary px-5 py-2.5 text-sm">Manage Users</a>
+            <a href="{{ path('app_admin_user_create') }}" class="aero-btn px-5 py-2.5 text-sm">Create User</a>
+            <a href="{{ path('app_admin_file_requests') }}" class="aero-btn px-5 py-2.5 text-sm">File Requests</a>
+            <a href="{{ path('app_admin_system_health') }}" class="aero-btn px-5 py-2.5 text-sm">System Health</a>
+        </div>
+    </div>
+
+    {% if recentTransfers|length > 0 %}
+    <div class="glass animate-in" style="animation-delay: 0.35s">
+        <div class="window-header">
+            <h2 class="text-sm font-medium text-white/60 uppercase tracking-wider">Recent Transfers</h2>
+            <a href="{{ path('app_transfers') }}" class="text-xs text-aero hover:text-aero-glow transition">View all</a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="text-white/30 text-xs uppercase tracking-wider border-b border-white/5">
+                        <th class="px-6 py-3 text-left">Filename</th>
+                        <th class="px-6 py-3 text-left">Owner</th>
+                        <th class="px-6 py-3 text-left">Size</th>
+                        <th class="px-6 py-3 text-left">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transfer in recentTransfers %}
+                    <tr class="border-b border-white/5 hover:bg-white/[0.03] transition">
+                        <td class="px-6 py-3.5">
+                            <div class="flex items-center gap-2">
+                                <span class="text-white/80 font-medium text-sm">{{ transfer.originalFilename }}</span>
+                                {% if transfer.fileCount > 1 %}
+                                    <span class="text-[10px] bg-aero/15 text-aero px-2 py-0.5 rounded-full border border-aero/20">{{ transfer.fileCount }}</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-3.5 text-white/45 text-sm">{{ transfer.user.email }}</td>
+                        <td class="px-6 py-3.5 text-white/45 text-sm">{{ transfer.formattedSize }}</td>
+                        <td class="px-6 py-3.5">
+                            {% if transfer.isDownloadable %}
+                                <span class="status-badge status-active">Active</span>
+                            {% elseif transfer.isExpired %}
+                                <span class="status-badge status-expired">Expired</span>
+                            {% elseif transfer.isRevoked %}
+                                <span class="status-badge status-revoked">Revoked</span>
+                            {% else %}
+                                <span class="status-badge status-exhausted">Exhausted</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

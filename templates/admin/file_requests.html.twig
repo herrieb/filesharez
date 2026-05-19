@@ -1,0 +1,99 @@
+{% extends 'app_layout.html.twig' %}
+
+{% block title %}File Requests - FileShareZ Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-7">
+    <div class="flex items-center justify-between animate-in">
+        <div>
+            <h1 class="text-2xl font-light tracking-wide text-white/90">File Requests</h1>
+            <p class="text-white/35 mt-1 text-sm">Manage all file requests across users</p>
+        </div>
+        <a href="{{ path('app_admin_dashboard') }}" class="aero-btn px-5 py-2.5 text-sm">Back to Dashboard</a>
+    </div>
+
+    {% if fileRequests|length > 0 %}
+    <div class="glass animate-in" style="animation-delay: 0.1s">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="text-white/30 text-xs uppercase tracking-wider border-b border-white/5">
+                        <th class="px-6 py-3.5 text-left">Name</th>
+                        <th class="px-6 py-3.5 text-left">Owner</th>
+                        <th class="px-6 py-3.5 text-left">Uploads</th>
+                        <th class="px-6 py-3.5 text-left">Max Files</th>
+                        <th class="px-6 py-3.5 text-left">Expires</th>
+                        <th class="px-6 py-3.5 text-left">Status</th>
+                        <th class="px-6 py-3.5 text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fr in fileRequests %}
+                    <tr class="border-b border-white/5 hover:bg-white/[0.03] transition" id="fr-row-{{ fr.id }}">
+                        <td class="px-6 py-3.5">
+                            <span class="text-white/80 font-medium text-sm">{{ fr.name }}</span>
+                            {% if fr.description %}<p class="text-white/30 text-xs mt-0.5">{{ fr.description }}</p>{% endif %}
+                        </td>
+                        <td class="px-6 py-3.5 text-white/45 text-sm">{{ fr.user.email }}</td>
+                        <td class="px-6 py-3.5 text-white/45 text-sm">{{ fr.uploadCount }}</td>
+                        <td class="px-6 py-3.5 text-white/45 text-sm">{{ fr.maxFiles }}</td>
+                        <td class="px-6 py-3.5 text-white/45 text-sm">{{ fr.expiresAt|date('M j, Y') }}</td>
+                        <td class="px-6 py-3.5">
+                            {% if fr.isAcceptingUploads %}
+                                <span class="status-badge status-active">Active</span>
+                            {% elseif fr.isExpired %}
+                                <span class="status-badge status-expired">Expired</span>
+                            {% else %}
+                                <span class="status-badge status-revoked">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-3.5">
+                            <div class="flex gap-3">
+                                {% if fr.isAcceptingUploads %}
+                                <button onclick="toggleRequest('{{ fr.id }}', this)" class="text-white/25 hover:text-warn transition text-xs">Pause</button>
+                                {% else %}
+                                <button onclick="toggleRequest('{{ fr.id }}', this)" class="text-white/25 hover:text-success transition text-xs">Activate</button>
+                                {% endif %}
+                                <button onclick="deleteRequest('{{ fr.id }}', this)" class="text-white/25 hover:text-danger transition text-xs">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="glass p-16 text-center animate-in">
+        <svg class="w-16 h-16 text-white/8 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+        <h3 class="text-lg font-light text-white/50">No file requests yet</h3>
+        <p class="text-white/25 mt-1 text-sm">File requests will appear here when created by users</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+async function toggleRequest(id, btn) {
+    btn.textContent = '...';
+    btn.disabled = true;
+    try {
+        const res = await fetch('/admin/file-requests/' + id + '/toggle', { method: 'POST' });
+        if (res.ok) { location.reload(); }
+        else { alert('Action failed'); btn.disabled = false; }
+    } catch (e) { alert('Network error'); btn.disabled = false; }
+}
+
+async function deleteRequest(id, btn) {
+    if (!confirm('Delete this file request and all its uploads?')) return;
+    btn.textContent = '...';
+    btn.disabled = true;
+    try {
+        const res = await fetch('/admin/file-requests/' + id + '/delete', { method: 'POST' });
+        if (res.ok) {
+            const row = document.getElementById('fr-row-' + id);
+            if (row) row.remove();
+        } else { alert('Delete failed'); btn.disabled = false; }
+    } catch (e) { alert('Network error'); btn.disabled = false; }
+}
+</script>
+{% endblock %}

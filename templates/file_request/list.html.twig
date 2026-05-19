@@ -1,0 +1,95 @@
+{% extends 'app_layout.html.twig' %}
+
+{% block title %}File Requests - FileShareZ{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-7">
+    <div class="flex items-center justify-between animate-in">
+        <div>
+            <h1 class="text-2xl font-light tracking-wide text-white/90">File Requests</h1>
+            <p class="text-white/35 mt-1 text-sm">Create shareable links for others to send you files</p>
+        </div>
+        <a href="{{ path('app_file_request_create') }}" class="aero-btn-primary px-5 py-2.5 text-sm flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            New Request
+        </a>
+    </div>
+
+    {% if resolvedRequests|length > 0 %}
+    <div class="glass animate-in" style="animation-delay: 0.1s">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="text-white/30 text-xs uppercase tracking-wider border-b border-white/5">
+                        <th class="px-6 py-3.5 text-left">Name</th>
+                        <th class="px-6 py-3.5 text-left">Link</th>
+                        <th class="px-6 py-3.5 text-left">Uploads</th>
+                        <th class="px-6 py-3.5 text-left">Expires</th>
+                        <th class="px-6 py-3.5 text-left">Status</th>
+                        <th class="px-6 py-3.5 text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in resolvedRequests %}
+                    {% set fr = item.entity %}
+                    <tr class="border-b border-white/5 hover:bg-white/[0.03] transition">
+                        <td class="px-6 py-3.5">
+                            <span class="text-white/80 font-medium text-sm">{{ fr.name }}</span>
+                            {% if fr.description %}<p class="text-white/30 text-xs mt-0.5">{{ fr.description }}</p>{% endif %}
+                        </td>
+                        <td class="px-6 py-3.5">
+                            {% if item.rawToken %}
+                            <button onclick="navigator.clipboard.writeText('{{ url('app_file_request_upload', {token: item.rawToken}) }}'); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 2000)" class="text-aero hover:text-aero-glow text-xs transition">Copy Link</button>
+                            {% else %}
+                            <span class="text-white/20 text-xs" title="Token only available when first created">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-3.5 text-white/45 text-sm">{{ fr.uploadCount }} / {{ fr.maxFiles }}</td>
+                        <td class="px-6 py-3.5 text-white/45 text-sm">{{ fr.expiresAt|date('M j, Y') }}</td>
+                        <td class="px-6 py-3.5">
+                            {% if fr.isAcceptingUploads %}
+                                <span class="status-badge status-active">Active</span>
+                            {% elseif fr.isExpired %}
+                                <span class="status-badge status-expired">Expired</span>
+                            {% else %}
+                                <span class="status-badge status-revoked">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-3.5">
+                            <div class="flex gap-3">
+                                {% if fr.isAcceptingUploads %}
+                                <button onclick="actionRequest('{{ fr.id }}', 'deactivate', this)" class="text-white/25 hover:text-warn transition text-xs">Pause</button>
+                                {% else %}
+                                <button onclick="actionRequest('{{ fr.id }}', 'activate', this)" class="text-white/25 hover:text-success transition text-xs">Reactivate</button>
+                                {% endif %}
+                                <button onclick="actionRequest('{{ fr.id }}', 'delete', this)" class="text-white/25 hover:text-danger transition text-xs">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="glass p-16 text-center animate-in">
+        <svg class="w-16 h-16 text-white/8 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+        <h3 class="text-lg font-light text-white/50">No file requests yet</h3>
+        <p class="text-white/25 mt-1 text-sm">Create a request link to collect files from others</p>
+        <a href="{{ path('app_file_request_create') }}" class="aero-btn-primary inline-block mt-6 px-7 py-2.5 text-sm">Create Request</a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+async function actionRequest(id, action, btn) {
+    btn.textContent = '...';
+    btn.disabled = true;
+    try {
+        const res = await fetch('/file-requests/' + id + '/' + action, { method: 'POST' });
+        if (res.ok) { location.reload(); }
+        else { alert('Action failed'); btn.textContent = action === 'delete' ? 'Delete' : action === 'deactivate' ? 'Pause' : 'Reactivate'; btn.disabled = false; }
+    } catch (e) { alert('Network error'); btn.disabled = false; }
+}
+</script>
+{% endblock %}

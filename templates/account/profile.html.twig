@@ -1,0 +1,30 @@
+{% extends 'app_layout.html.twig' %}
+
+{% block title %}Edit Profile - FileShareZ{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-7">
+    <div class="animate-in">
+        <a href="{{ path('app_account') }}" class="text-aero/60 hover:text-aero text-xs uppercase tracking-wider">&larr; Back to Account</a>
+        <h1 class="text-2xl font-light tracking-wide text-white/90 mt-2">Edit Profile</h1>
+        <p class="text-white/35 mt-1 text-sm">Update your display name and email</p>
+    </div>
+    <div class="glass animate-in p-8" style="animation-delay: 0.1s">
+        {{ form_start(form) }}
+            <div class="space-y-5">
+                <div>
+                    {{ form_label(form.name, null, {'label_attr': {'class': 'block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider'}}) }}
+                    {{ form_widget(form.name) }}
+                    {{ form_errors(form.name) }}
+                </div>
+                <div>
+                    {{ form_label(form.email, null, {'label_attr': {'class': 'block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider'}}) }}
+                    {{ form_widget(form.email) }}
+                    {{ form_errors(form.email) }}
+                </div>
+                <button type="submit" class="aero-btn-primary px-8 py-2.5 text-sm">Save Changes</button>
+            </div>
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

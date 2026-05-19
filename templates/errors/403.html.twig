@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+{% block title %}403 - FileShareZ{% endblock %}
+{% block body %}
+<div class="min-h-screen flex items-center justify-center p-4">
+    <div class="glass animate-in p-10 w-full max-w-md text-center">
+        <h1 class="text-7xl font-extralight text-warn/40">403</h1>
+        <p class="text-white/35 mt-2 text-sm">Access denied</p>
+        <a href="{{ path('app_dashboard') }}" class="aero-btn-primary inline-block mt-6 px-8 py-2.5 text-sm">Go Home</a>
+    </div>
+</div>
+{% endblock %}

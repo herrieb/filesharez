@@ -1,0 +1,612 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}FileShareZ — Secure File Transfer{% endblock %}
+
+{% block body %}
+<div class="relative z-10">
+
+    <div class="floating-nav">
+        <a href="{{ path('app_landing') }}" class="nav-orb" aria-label="Home">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" stroke="url(#orbGrad)"/>
+                <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <defs><linearGradient id="orbGrad" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#6CB2FF"/><stop offset="1" stop-color="#8EC5FF" stop-opacity="0.4"/></linearGradient></defs>
+            </svg>
+        </a>
+        <span class="nav-brand">FileShareZ</span>
+        <div class="nav-links">
+            <a href="#features" class="nav-link">Features</a>
+            <a href="#security" class="nav-link">Security</a>
+            {% if app.user %}
+            <a href="{{ path('app_dashboard') }}" class="aero-btn-primary px-5 py-2 text-sm rounded-xl">Dashboard</a>
+            {% else %}
+            <a href="{{ path('app_login') }}" class="aero-btn-primary px-5 py-2 text-sm rounded-xl">Sign In</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <section class="hero-section">
+        <div class="hero-content">
+            <div class="hero-text animate-in" style="animation-delay:0.1s">
+                <p class="hero-eyebrow">Secure &middot; Private &middot; Ephemeral</p>
+                <h1 class="hero-headline">
+                    Transfer Files Through<br>
+                    <span class="text-aero glow-text">A Modern Glass Interface.</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Private uploads, expiring downloads, email delivery, and premium security &mdash; inside a futuristic transfer platform.
+                </p>
+                <div class="hero-actions">
+                    {% if app.user %}
+                    <a href="{{ path('app_upload') }}" class="aero-btn-primary px-8 py-3.5 text-base rounded-2xl inline-flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                        Start Uploading
+                    </a>
+                    {% else %}
+                    <a href="{{ path('app_login') }}" class="aero-btn-primary px-8 py-3.5 text-base rounded-2xl inline-flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                        Start Uploading
+                    </a>
+                    {% endif %}
+                    <a href="#features" class="aero-btn px-8 py-3.5 text-base rounded-2xl">View Features</a>
+                </div>
+            </div>
+
+            <div class="hero-visual animate-in" style="animation-delay:0.3s">
+                <div class="upload-window">
+                    <div class="upload-window-header">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-danger/60"></span>
+                            <span class="w-3 h-3 rounded-full bg-warn/60"></span>
+                            <span class="w-3 h-3 rounded-full bg-success/60"></span>
+                        </div>
+                        <span class="text-white/30 text-xs font-medium tracking-wide">Upload Queue</span>
+                        <span class="text-white/20 text-xs">&mdash;</span>
+                    </div>
+                    <div class="upload-window-body">
+                        <div class="drop-zone-mock">
+                            <svg class="w-10 h-10 text-aero/40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                            <p class="text-white/25 text-sm mt-2">Drag &amp; drop files here</p>
+                        </div>
+
+                        <div class="transfer-mock">
+                            <div class="transfer-mock-info">
+                                <svg class="w-4 h-4 text-aero/60 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                <span class="text-white/50 text-xs">annual-report-2026.pdf</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div class="progress-bar-fill shimmer-bar" style="width:67%"></div>
+                            </div>
+                            <span class="text-aero/50 text-[11px] font-mono">67%</span>
+                        </div>
+
+                        <div class="transfer-mock">
+                            <div class="transfer-mock-info">
+                                <svg class="w-4 h-4 text-success/60 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                <span class="text-white/50 text-xs">brand-assets.zip</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-[11px]">
+                                <span class="status-badge status-active">Complete</span>
+                                <span class="text-white/20 font-mono">Expires 5d</span>
+                            </div>
+                        </div>
+
+                        <div class="transfer-mock">
+                            <div class="transfer-mock-info">
+                                <svg class="w-4 h-4 text-aero/40 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                                <span class="text-white/50 text-xs">notes.txt</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-[11px]">
+                                <span class="status-badge status-active">Live</span>
+                                <span class="text-white/20 font-mono">1/3 downloads</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ambient-glow glow-1"></div>
+        <div class="ambient-glow glow-2"></div>
+    </section>
+
+    <section id="features" class="features-section">
+        <div class="section-header animate-in">
+            <p class="section-eyebrow">Capabilities</p>
+            <h2 class="section-title">Built for secure, modern transfers</h2>
+        </div>
+        <div class="features-grid">
+            <div class="glass animate-in" style="animation-delay:0.1s">
+                <div class="feature-icon-wrap">
+                    <svg class="w-6 h-6 text-aero" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <h3 class="feature-title">Expiring Transfers</h3>
+                <p class="feature-desc">Files automatically disappear after expiry. Set days or hours &mdash; your data won't linger forever.</p>
+            </div>
+            <div class="glass animate-in" style="animation-delay:0.15s">
+                <div class="feature-icon-wrap">
+                    <svg class="w-6 h-6 text-success" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9l-3-3m0 0l3 3m-3-3v12m18-3l-3 3m0 0l-3-3m3 3V6"/></svg>
+                </div>
+                <h3 class="feature-title">Download Limits</h3>
+                <p class="feature-desc">Control exactly how many times a file can be downloaded. No more uncontrolled distribution.</p>
+            </div>
+            <div class="glass animate-in" style="animation-delay:0.2s">
+                <div class="feature-icon-wrap">
+                    <svg class="w-6 h-6 text-warn" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.616a2.25 2.25 0 01-2.36 0L3.32 8.909A2.25 2.25 0 012.25 6.993V6.75"/></svg>
+                </div>
+                <h3 class="feature-title">Email Delivery</h3>
+                <p class="feature-desc">Send secure transfer links directly to recipients. They get a clean download page &mdash; no account needed.</p>
+            </div>
+            <div class="glass animate-in" style="animation-delay:0.25s">
+                <div class="feature-icon-wrap">
+                    <svg class="w-6 h-6 text-aero-glow" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+                </div>
+                <h3 class="feature-title">Secure Storage</h3>
+                <p class="feature-desc">Randomized directory sharding and non-guessable filenames. Your files are hidden by architecture.</p>
+            </div>
+            <div class="glass animate-in" style="animation-delay:0.3s">
+                <div class="feature-icon-wrap">
+                    <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                </div>
+                <h3 class="feature-title">Text-to-File</h3>
+                <p class="feature-desc">Convert text snippets into downloadable files. Share code, notes, or messages as expiring transfers.</p>
+            </div>
+            <div class="glass animate-in" style="animation-delay:0.35s">
+                <div class="feature-icon-wrap">
+                    <svg class="w-6 h-6 text-danger" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.942c-.563.18-1.168.278-1.771.278a5.75 5.75 0 01-2.25-.458m-6 3.54a6 6 0 01-3-5.197V9a6 6 0 016-6h.75a6 6 0 016 6v.39a6 6 0 01-3 5.197m-6.75 2.39h6"/></svg>
+                </div>
+                <h3 class="feature-title">Private Access</h3>
+                <p class="feature-desc">Authenticated uploads only. Every transfer is tied to a verified user account &mdash; no anonymous chaos.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="security" class="security-section">
+        <div class="security-layout">
+            <div class="security-content animate-in">
+                <p class="section-eyebrow">Architecture</p>
+                <h2 class="section-title">Security by design, not by afterthought.</h2>
+                <p class="text-white/40 text-lg font-light leading-relaxed mb-8">
+                    Every file is stored with randomized directory sharding (ab/cd/ef/hash.bin). Original filenames are never exposed on the filesystem. Download tokens are one-time hashes. Access is gated at the application level.
+                </p>
+                <div class="space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="w-5 h-5 rounded-full bg-aero/10 border border-aero/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg class="w-3 h-3 text-aero" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+                        <span class="text-white/50 text-sm">Nginx blocks direct storage access &mdash; files served only through authenticated routes</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="w-5 h-5 rounded-full bg-aero/10 border border-aero/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg class="w-3 h-3 text-aero" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+                        <span class="text-white/50 text-sm">CSRF-protected forms &amp; session-based authentication with bcrypt password hashing</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="w-5 h-5 rounded-full bg-aero/10 border border-aero/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg class="w-3 h-3 text-aero" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+                        <span class="text-white/50 text-sm">Optional transfer passwords, download limits, and auto-expiry ensure data lifecycle control</span>
+                    </div>
+                </div>
+            </div>
+            <div class="security-visual animate-in" style="animation-delay:0.2s">
+                <div class="glass" style="padding:2rem; border-radius:28px;">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-xl bg-aero/10 border border-aero/20 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-aero" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+                        </div>
+                        <div>
+                            <div class="text-white/70 text-sm font-medium">Storage Architecture</div>
+                            <div class="text-white/30 text-xs">Directory sharding visualization</div>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="glass-light p-3 flex items-center gap-3" style="border-radius:12px">
+                            <span class="text-aero/60 font-mono text-xs">/ab/cd/ef/</span>
+                            <span class="text-white/20">&rarr;</span>
+                            <span class="text-white/50 text-xs">a7f3...9e2b.bin</span>
+                            <span class="ml-auto status-badge status-active">Stored</span>
+                        </div>
+                        <div class="glass-light p-3 flex items-center gap-3" style="border-radius:12px">
+                            <span class="text-aero/60 font-mono text-xs">/x1/y2/z3/</span>
+                            <span class="text-white/20">&rarr;</span>
+                            <span class="text-white/50 text-xs">b2c8...4d1f.bin</span>
+                            <span class="ml-auto status-badge status-active">Stored</span>
+                        </div>
+                        <div class="glass-light p-3 flex items-center gap-3" style="border-radius:12px">
+                            <span class="text-danger/40 font-mono text-xs">/jk/lm/no/</span>
+                            <span class="text-white/20">&rarr;</span>
+                            <span class="text-white/20 text-xs line-through">deleted.bin</span>
+                            <span class="ml-auto status-badge status-expired">Purged</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 glass-light text-center" style="border-radius:12px">
+                        <span class="text-white/30 text-xs">Original filenames never stored on disk</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <div class="glass animate-in" style="padding:3rem 4rem; text-align:center; max-width:700px; margin:0 auto; border-radius:32px;">
+            <h2 class="text-3xl font-extralight text-white/90 mb-4 tracking-wide">Ready to transfer?</h2>
+            <p class="text-white/35 text-lg font-light mb-8">Join a file sharing platform that takes your privacy seriously.</p>
+            <div class="flex items-center justify-center gap-4 flex-wrap">
+                {% if app.user %}
+                <a href="{{ path('app_upload') }}" class="aero-btn-primary px-8 py-3.5 text-base rounded-2xl inline-flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                    Start Uploading
+                </a>
+                {% else %}
+                <a href="{{ path('app_login') }}" class="aero-btn-primary px-8 py-3.5 text-base rounded-2xl inline-flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.942c-.563.18-1.168.278-1.771.278a5.75 5.75 0 01-2.25-.458m-6 3.54a6 6 0 01-3-5.197V9a6 6 0 016-6h.75a6 6 0 016 6v.39a6 6 0 01-3 5.197m-6.75 2.39h6"/></svg>
+                    Sign In
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <footer class="landing-footer">
+        <div class="footer-separator"></div>
+        <div class="footer-content">
+            <span class="text-white/20 text-xs">&copy; {{ 'now'|date('Y') }} FileShareZ</span>
+            <span class="text-white/10 text-xs">v1.0</span>
+            <span class="text-white/20 text-xs">Secure by design</span>
+        </div>
+    </footer>
+</div>
+{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .floating-nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 200;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 28px;
+        background: rgba(27,30,36,0.55);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        transition: background 0.3s ease;
+    }
+    .nav-orb {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(108,178,255,0.25), rgba(108,178,255,0.08));
+        border: 1px solid rgba(108,178,255,0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 12px rgba(108,178,255,0.1), inset 0 1px 0 rgba(255,255,255,0.12);
+        flex-shrink: 0;
+    }
+    .nav-orb:hover {
+        background: linear-gradient(135deg, rgba(108,178,255,0.4), rgba(108,178,255,0.15));
+        box-shadow: 0 0 20px rgba(108,178,255,0.25), inset 0 1px 0 rgba(255,255,255,0.15);
+    }
+    .nav-brand {
+        color: rgba(255,255,255,0.55);
+        font-weight: 600;
+        font-size: 15px;
+        letter-spacing: 0.04em;
+    }
+    .nav-links {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
+    .nav-link {
+        color: rgba(255,255,255,0.4);
+        font-size: 14px;
+        font-weight: 400;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+    .nav-link:hover { color: #8EC5FF; }
+
+    .hero-section {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 100px 28px 60px;
+        position: relative;
+        overflow: hidden;
+    }
+    .hero-content {
+        max-width: 1200px;
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+        align-items: center;
+    }
+    .hero-eyebrow {
+        text-transform: uppercase;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.2em;
+        color: #6CB2FF;
+        margin-bottom: 20px;
+    }
+    .hero-headline {
+        font-size: 3.5rem;
+        font-weight: 200;
+        line-height: 1.1;
+        color: rgba(255,255,255,0.92);
+        margin-bottom: 24px;
+        letter-spacing: -0.01em;
+    }
+    .glow-text {
+        text-shadow: 0 0 40px rgba(108,178,255,0.3), 0 0 80px rgba(108,178,255,0.1);
+    }
+    .hero-subtitle {
+        font-size: 1.125rem;
+        font-weight: 300;
+        color: rgba(255,255,255,0.35);
+        line-height: 1.7;
+        margin-bottom: 36px;
+        max-width: 480px;
+    }
+    .hero-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .upload-window {
+        background: rgba(255,255,255,0.06);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 20px;
+        box-shadow: 0 24px 80px rgba(0,0,0,0.4), 0 0 60px rgba(108,178,255,0.06);
+        overflow: hidden;
+        animation: floatWindow 6s ease-in-out infinite;
+    }
+    .upload-window-header {
+        background: linear-gradient(180deg, rgba(255,255,255,0.06), transparent);
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        padding: 12px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .upload-window-body {
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .drop-zone-mock {
+        border: 2px dashed rgba(108,178,255,0.2);
+        border-radius: 14px;
+        padding: 28px;
+        text-align: center;
+        background: rgba(108,178,255,0.02);
+        animation: pulseGlow 4s ease-in-out infinite;
+    }
+    .transfer-mock {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 12px;
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+    .transfer-mock-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    @keyframes floatWindow {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+    }
+
+    .shimmer-bar {
+        background-size: 200% 100%;
+        background-image: linear-gradient(90deg, #6CB2FF 0%, #8EC5FF 25%, #6CB2FF 50%, #8EC5FF 75%, #6CB2FF 100%);
+        animation: shimmer 3s linear infinite;
+    }
+
+    .ambient-glow {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(100px);
+        pointer-events: none;
+        z-index: 0;
+    }
+    .glow-1 {
+        width: 500px;
+        height: 500px;
+        background: rgba(108,178,255,0.06);
+        top: 10%;
+        left: -5%;
+        animation: driftGlow1 20s ease-in-out infinite;
+    }
+    .glow-2 {
+        width: 400px;
+        height: 400px;
+        background: rgba(255,255,255,0.03);
+        bottom: 5%;
+        right: -5%;
+        animation: driftGlow2 25s ease-in-out infinite;
+    }
+    @keyframes driftGlow1 {
+        0%, 100% { transform: translate(0, 0); }
+        33% { transform: translate(60px, 40px); }
+        66% { transform: translate(-30px, 20px); }
+    }
+    @keyframes driftGlow2 {
+        0%, 100% { transform: translate(0, 0); }
+        33% { transform: translate(-40px, -30px); }
+        66% { transform: translate(20px, -50px); }
+    }
+
+    .features-section {
+        padding: 100px 28px 80px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .section-header {
+        text-align: center;
+        margin-bottom: 60px;
+    }
+    .section-eyebrow {
+        text-transform: uppercase;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.25em;
+        color: #6CB2FF;
+        margin-bottom: 12px;
+    }
+    .section-title {
+        font-size: 2rem;
+        font-weight: 200;
+        color: rgba(255,255,255,0.85);
+        letter-spacing: -0.01em;
+    }
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+    }
+    .features-grid > div {
+        padding: 32px 28px;
+        border-radius: 28px;
+    }
+    .feature-icon-wrap {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        background: rgba(108,178,255,0.08);
+        border: 1px solid rgba(108,178,255,0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+    .feature-title {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: rgba(255,255,255,0.85);
+        margin-bottom: 10px;
+    }
+    .feature-desc {
+        font-size: 0.9rem;
+        font-weight: 300;
+        color: rgba(255,255,255,0.35);
+        line-height: 1.6;
+    }
+
+    .security-section {
+        padding: 80px 28px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .security-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+        align-items: center;
+    }
+    .security-content .section-title {
+        text-align: left;
+    }
+
+    .cta-section {
+        padding: 80px 28px;
+    }
+
+    .landing-footer {
+        padding: 40px 28px 28px;
+    }
+    .footer-separator {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(108,178,255,0.15), transparent);
+        margin-bottom: 24px;
+    }
+    .footer-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+    }
+
+    @media (max-width: 968px) {
+        .hero-content {
+            grid-template-columns: 1fr;
+            gap: 40px;
+            text-align: center;
+        }
+        .hero-headline { font-size: 2.5rem; }
+        .hero-subtitle { margin-left: auto; margin-right: auto; }
+        .hero-actions { justify-content: center; }
+        .hero-visual { max-width: 480px; margin: 0 auto; }
+        .features-grid { grid-template-columns: 1fr; }
+        .security-layout { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+        .hero-headline { font-size: 2rem; }
+        .floating-nav { padding: 10px 14px; }
+        .nav-links { gap: 12px; }
+        .nav-link { font-size: 12px; }
+        .features-section { padding: 60px 16px; }
+        .security-section { padding: 60px 16px; }
+        .cta-section { padding: 60px 16px; }
+        .cta-section .glass { padding: 2rem 1.5rem !important; }
+        .hero-section { padding: 80px 16px 40px; }
+    }
+</style>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                entry.target.style.animationPlayState = 'running';
+                entry.target.classList.add('animate-in');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.features-grid .glass, .security-section .glass, .security-content, .security-visual, .cta-section .glass').forEach(function(el) {
+        el.style.opacity = '0';
+        el.style.animationPlayState = 'paused';
+        observer.observe(el);
+    });
+
+    var nav = document.querySelector('.floating-nav');
+    if (nav) {
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 50) {
+                nav.style.background = 'rgba(27,30,36,0.85)';
+            } else {
+                nav.style.background = 'rgba(27,30,36,0.55)';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

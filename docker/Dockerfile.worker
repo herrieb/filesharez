@@ -1,0 +1,45 @@
+FROM php:8.3-fpm-alpine
+
+RUN apk add --no-cache \
+    icu-dev \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    libzip-dev \
+    oniguruma-dev \
+    linux-headers \
+    git \
+    curl \
+    unzip \
+    postgresql-dev \
+    bash
+
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
+    docker-php-ext-install -j$(nproc) \
+    intl \
+    gd \
+    zip \
+    mbstring \
+    opcache \
+    pdo_pgsql \
+    pcntl
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+COPY docker/php/custom.ini /usr/local/etc/php/conf.d/custom.ini
+
+RUN adduser -u 1000 -D -H -s /bin/sh appuser
+
+WORKDIR /var/www/html
+
+COPY . .
+
+RUN mkdir -p var/cache var/log var/sessions && \
+    chown -R appuser:appuser var && \
+    chmod -R 775 var
+
+RUN if [ -f composer.json ]; then composer install --no-dev --optimize-autoloader --no-interaction || true; fi
+
+USER appuser
+
+CMD ["php-fpm"]

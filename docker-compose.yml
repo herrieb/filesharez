@@ -1,0 +1,155 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: filesharez_app
+    restart: unless-stopped
+    volumes:
+      - .:/var/www/html
+      - ./docker/storage/transfers:/app/storage/transfers
+      - ./docker/storage/previews:/app/storage/previews
+      - ./docker/storage/tmp:/app/storage/tmp
+      - ./docker/storage/quarantine:/app/storage/quarantine
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      APP_SECRET: ${APP_SECRET:-changeMeThisIsNotProductionSafe}
+      DATABASE_URL: postgresql://filesharez:filesharez@postgres:5432/filesharez?serverVersion=16&charset=utf8
+      REDIS_URL: redis://redis:6379
+      MAILER_DSN: smtp://mailpit:1025
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_REGION: ${S3_REGION:-}
+      S3_KEY: ${S3_KEY:-}
+      S3_SECRET: ${S3_SECRET:-}
+      MAX_UPLOAD_SIZE: ${MAX_UPLOAD_SIZE:-20G}
+      DEFAULT_EXPIRY_DAYS: ${DEFAULT_EXPIRY_DAYS:-7}
+      DEFAULT_MAX_DOWNLOADS: ${DEFAULT_MAX_DOWNLOADS:-1}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - filesharez
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: filesharez_nginx
+    restart: unless-stopped
+    ports:
+      - "4113:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - filesharez
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: filesharez_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: filesharez
+      POSTGRES_USER: filesharez
+      POSTGRES_PASSWORD: filesharez
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U filesharez"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - filesharez
+
+  redis:
+    image: redis:7-alpine
+    container_name: filesharez_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - filesharez
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: filesharez_worker
+    restart: unless-stopped
+    command: php bin/console messenger:consume async --time-limit=3600 --memory-limit=512M
+    volumes:
+      - .:/var/www/html
+      - ./docker/storage/transfers:/app/storage/transfers
+      - ./docker/storage/previews:/app/storage/previews
+      - ./docker/storage/tmp:/app/storage/tmp
+      - ./docker/storage/quarantine:/app/storage/quarantine
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      APP_SECRET: ${APP_SECRET:-changeMeThisIsNotProductionSafe}
+      DATABASE_URL: postgresql://filesharez:filesharez@postgres:5432/filesharez?serverVersion=16&charset=utf8
+      REDIS_URL: redis://redis:6379
+      MAILER_DSN: smtp://mailpit:1025
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - filesharez
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: filesharez_scheduler
+    restart: unless-stopped
+    command: php bin/console messenger:consume scheduler_default --time-limit=3600 --memory-limit=512M
+    volumes:
+      - .:/var/www/html
+      - ./docker/storage/transfers:/app/storage/transfers
+      - ./docker/storage/previews:/app/storage/previews
+      - ./docker/storage/tmp:/app/storage/tmp
+      - ./docker/storage/quarantine:/app/storage/quarantine
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      APP_SECRET: ${APP_SECRET:-changeMeThisIsNotProductionSafe}
+      DATABASE_URL: postgresql://filesharez:filesharez@postgres:5432/filesharez?serverVersion=16&charset=utf8
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - filesharez
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: filesharez_mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - filesharez
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  filesharez:
+    driver: bridge

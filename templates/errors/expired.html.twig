@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Link Invalid - FileShareZ{% endblock %}
+
+{% block body %}
+<div class="min-h-screen flex items-center justify-center p-4">
+    <div class="glass animate-in p-10 w-full max-w-md text-center">
+        {% if reason == 'not_found' %}
+            <div class="w-14 h-14 rounded-full bg-danger/10 flex items-center justify-center mx-auto mb-5 border border-danger/20">
+                <svg class="w-7 h-7 text-danger/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg>
+            </div>
+            <h1 class="text-xl font-light text-white/90 mb-1">Link Not Found</h1>
+            <p class="text-white/35 text-sm">This download link doesn't exist or has been removed.</p>
+        {% elseif reason == 'expired' %}
+            <div class="w-14 h-14 rounded-full bg-warn/10 flex items-center justify-center mx-auto mb-5 border border-warn/20">
+                <svg class="w-7 h-7 text-warn/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h1 class="text-xl font-light text-white/90 mb-1">Link Expired</h1>
+            <p class="text-white/35 text-sm">This download link has expired and is no longer available.</p>
+        {% elseif reason == 'exhausted' %}
+            <div class="w-14 h-14 rounded-full bg-warn/10 flex items-center justify-center mx-auto mb-5 border border-warn/20">
+                <svg class="w-7 h-7 text-warn/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 0A9 9 0 015.636 18.364m12.728-12.728L5.636 18.364"/></svg>
+            </div>
+            <h1 class="text-xl font-light text-white/90 mb-1">Download Limit Reached</h1>
+            <p class="text-white/35 text-sm">This file has reached its maximum number of downloads.</p>
+        {% elseif reason == 'revoked' %}
+            <div class="w-14 h-14 rounded-full bg-danger/10 flex items-center justify-center mx-auto mb-5 border border-danger/20">
+                <svg class="w-7 h-7 text-danger/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 0A9 9 0 015.636 18.364m12.728-12.728L5.636 18.364"/></svg>
+            </div>
+            <h1 class="text-xl font-light text-white/90 mb-1">Link Revoked</h1>
+            <p class="text-white/35 text-sm">This download link has been revoked by the sender.</p>
+        {% elseif reason == 'password' %}
+            <div class="w-14 h-14 rounded-full bg-aero/10 flex items-center justify-center mx-auto mb-5 border border-aero/20">
+                <svg class="w-7 h-7 text-aero/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 10-8 0v4h8z"/></svg>
+            </div>
+            <h1 class="text-xl font-light text-white/90 mb-1">Incorrect Password</h1>
+            <p class="text-white/35 text-sm">The password you entered is incorrect.</p>
+        {% else %}
+            <div class="w-14 h-14 rounded-full bg-danger/10 flex items-center justify-center mx-auto mb-5 border border-danger/20">
+                <svg class="w-7 h-7 text-danger/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <h1 class="text-xl font-light text-white/90 mb-1">Something Went Wrong</h1>
+            <p class="text-white/35 text-sm">An unexpected error occurred.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
