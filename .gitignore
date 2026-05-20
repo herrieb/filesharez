@@ -33,6 +33,7 @@ node_modules/
 ### Uploads & storage ###
 storage/
 var/share/
+docker/storage/
 
 ### Logs ###
 *.log
