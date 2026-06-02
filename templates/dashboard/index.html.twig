@@ -3,29 +3,29 @@
 {% block title %}Dashboard - FileShareZ{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto space-y-8">
+<div class="max-w-5xl mx-auto space-y-6 sm:space-y-8">
     <div class="animate-in">
-        <h1 class="text-2xl font-light tracking-wide text-white/90">Dashboard</h1>
+        <h1 class="text-xl sm:text-2xl font-light tracking-wide text-white/90">Dashboard</h1>
         <p class="text-white/35 mt-1 text-sm">Welcome back, {{ app.user.name }}</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div class="glass-panel p-5 animate-in" style="animation-delay: 0.1s">
-            <p class="text-white/35 text-xs uppercase tracking-wider mb-1">Active Transfers</p>
-            <p class="text-3xl font-light text-aero-glow">{{ activeTransfers }}</p>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+        <div class="glass-panel p-4 sm:p-5 animate-in" style="animation-delay: 0.1s">
+            <p class="text-white/35 text-[10px] sm:text-xs uppercase tracking-wider mb-1">Active Transfers</p>
+            <p class="text-2xl sm:text-3xl font-light text-aero-glow">{{ activeTransfers }}</p>
         </div>
-        <div class="glass-panel p-5 animate-in" style="animation-delay: 0.15s">
-            <p class="text-white/35 text-xs uppercase tracking-wider mb-1">Expiring Soon</p>
-            <p class="text-3xl font-light text-warn">{{ expiringSoon }}</p>
+        <div class="glass-panel p-4 sm:p-5 animate-in" style="animation-delay: 0.15s">
+            <p class="text-white/35 text-[10px] sm:text-xs uppercase tracking-wider mb-1">Expiring Soon</p>
+            <p class="text-2xl sm:text-3xl font-light text-warn">{{ expiringSoon }}</p>
         </div>
-        <div class="glass-panel p-5 animate-in" style="animation-delay: 0.2s">
-            <p class="text-white/35 text-xs uppercase tracking-wider mb-1">Storage Used</p>
-            <p class="text-3xl font-light text-white/90">
+        <div class="glass-panel p-4 sm:p-5 animate-in" style="animation-delay: 0.2s">
+            <p class="text-white/35 text-[10px] sm:text-xs uppercase tracking-wider mb-1">Storage Used</p>
+            <p class="text-xl sm:text-3xl font-light text-white/90">
                 {{ quotaUsed > 1073741824 ? (quotaUsed / 1073741824)|number_format(1) ~ ' GB' : (quotaUsed / 1048576)|number_format(1) ~ ' MB' }}
             </p>
         </div>
-        <div class="glass-panel p-5 animate-in" style="animation-delay: 0.25s">
-            <p class="text-white/35 text-xs uppercase tracking-wider mb-1">Quota</p>
+        <div class="glass-panel p-4 sm:p-5 animate-in" style="animation-delay: 0.25s">
+            <p class="text-white/35 text-[10px] sm:text-xs uppercase tracking-wider mb-1">Quota</p>
             <p class="text-sm font-medium text-white/70 mt-1">{{ quotaPercent }}% used</p>
             <div class="progress-bar-track mt-3">
                 <div class="progress-bar-fill" style="width: {{ min(quotaPercent, 100) }}%"></div>
@@ -39,7 +39,7 @@
             <a href="{{ path('app_transfers') }}" class="text-xs text-aero hover:text-aero-glow transition">View all</a>
         </div>
         {% if recentTransfers|length > 0 %}
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto table-responsive">
             <table class="w-full">
                 <thead>
                     <tr class="text-white/30 text-xs uppercase tracking-wider border-b border-white/5">
@@ -53,7 +53,7 @@
                 <tbody>
                     {% for transfer in recentTransfers %}
                     <tr class="border-b border-white/5 hover:bg-white/[0.03] transition">
-                        <td class="px-6 py-3.5">
+                        <td class="px-3 sm:px-6 py-2.5 sm:py-3">
                             <div class="flex items-center gap-2">
                                 <span class="text-white/80 font-medium text-sm">{{ transfer.originalFilename }}</span>
                                 {% if transfer.isFromLibrary %}
@@ -69,10 +69,10 @@
                                 {% endif %}
                             </div>
                         </td>
-                        <td class="px-6 py-3.5 text-white/45 text-sm">{{ transfer.formattedSize }}</td>
-                        <td class="px-6 py-3.5 text-white/45 text-sm">{{ transfer.downloadCount }}/{{ transfer.maxDownloads }}</td>
-                        <td class="px-6 py-3.5 text-white/45 text-sm">{{ transfer.expiresAt|date('M j, Y') }}</td>
-                        <td class="px-6 py-3.5">
+                        <td class="px-3 sm:px-6 py-3 text-white/45 text-sm">{{ transfer.formattedSize }}</td>
+                        <td class="px-3 sm:px-6 py-3 text-white/45 text-sm">{{ transfer.downloadCount }}/{{ transfer.maxDownloads }}</td>
+                        <td class="px-3 sm:px-6 py-3 text-white/45 text-sm">{{ transfer.expiresAt|date('M j, Y') }}</td>
+                        <td class="px-3 sm:px-6 py-2.5 sm:py-3">
                             {% if transfer.isDownloadable %}
                                 <span class="status-badge status-active">Active</span>
                             {% elseif transfer.isExpired %}

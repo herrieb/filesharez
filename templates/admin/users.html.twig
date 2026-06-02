@@ -4,9 +4,9 @@
 
 {% block content %}
 <div class="max-w-5xl mx-auto space-y-7">
-    <div class="flex items-center justify-between animate-in">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 animate-in">
         <div>
-            <h1 class="text-2xl font-light tracking-wide text-white/90">Users</h1>
+            <h1 class="text-xl sm:text-2xl font-light tracking-wide text-white/90">Users</h1>
             <p class="text-white/35 mt-1 text-sm">Manage user accounts</p>
         </div>
         <a href="{{ path('app_admin_user_create') }}" class="aero-btn-primary px-5 py-2.5 text-sm flex items-center gap-2">
@@ -16,37 +16,37 @@
     </div>
 
     <div class="glass animate-in" style="animation-delay: 0.1s">
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto table-responsive">
             <table class="w-full">
                 <thead>
                     <tr class="text-white/30 text-xs uppercase tracking-wider border-b border-white/5">
-                        <th class="px-6 py-3.5 text-left">Name</th>
-                        <th class="px-6 py-3.5 text-left">Email</th>
-                        <th class="px-6 py-3.5 text-left">Role</th>
-                        <th class="px-6 py-3.5 text-left">Status</th>
-                        <th class="px-6 py-3.5 text-left">Actions</th>
+                        <th class="px-3 sm:px-6 py-3 text-left">Name</th>
+                        <th class="px-3 sm:px-6 py-3 text-left">Email</th>
+                        <th class="px-3 sm:px-6 py-3 text-left">Role</th>
+                        <th class="px-3 sm:px-6 py-3 text-left">Status</th>
+                        <th class="px-3 sm:px-6 py-3 text-left">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for user in users %}
                     <tr class="border-b border-white/5 hover:bg-white/[0.03] transition">
-                        <td class="px-6 py-3.5 text-white/80 font-medium text-sm">{{ user.name }}</td>
-                        <td class="px-6 py-3.5 text-white/45 text-sm">{{ user.email }}</td>
-                        <td class="px-6 py-3.5">
+                        <td class="px-3 sm:px-6 py-3 text-white/80 font-medium text-sm">{{ user.name }}</td>
+                        <td class="px-3 sm:px-6 py-3 text-white/45 text-sm">{{ user.email }}</td>
+                        <td class="px-3 sm:px-6 py-2.5 sm:py-3">
                             {% if user.isAdmin %}
                                 <span class="status-badge" style="background:rgba(108,178,255,0.1);color:#6CB2FF;border:1px solid rgba(108,178,255,0.2)">Admin</span>
                             {% else %}
                                 <span class="status-badge" style="background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.35);border:1px solid rgba(255,255,255,0.08)">User</span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-3.5">
+                        <td class="px-3 sm:px-6 py-2.5 sm:py-3">
                             {% if user.isActive %}
                                 <span class="status-badge status-active">Active</span>
                             {% else %}
                                 <span class="status-badge status-expired">Disabled</span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-3.5">
+                        <td class="px-3 sm:px-6 py-2.5 sm:py-3">
                             <form method="POST" action="{{ path('app_admin_user_toggle', {id: user.id}) }}" class="inline">
                                 <button type="submit" class="text-xs {{ user.isActive ? 'text-danger/60 hover:text-danger' : 'text-success/60 hover:text-success' }} transition">
                                     {{ user.isActive ? 'Disable' : 'Enable' }}

@@ -3,13 +3,13 @@
 {% block title %}Create User - FileShareZ Admin{% endblock %}
 
 {% block content %}
-<div class="max-w-lg mx-auto space-y-7">
+<div class="max-w-lg mx-auto space-y-6 sm:space-y-7">
     <div class="animate-in">
-        <h1 class="text-2xl font-light tracking-wide text-white/90">Create User</h1>
+        <h1 class="text-xl sm:text-2xl font-light tracking-wide text-white/90">Create User</h1>
         <p class="text-white/35 mt-1 text-sm">Add a new user account</p>
     </div>
 
-    <div class="glass animate-in p-8" style="animation-delay: 0.1s">
+    <div class="glass animate-in p-6 sm:p-8" style="animation-delay: 0.1s">
         {{ form_start(form, {'attr': {'class': 'space-y-5'}}) }}
             <div>
                 {{ form_label(form.name, null, {'label_attr': {'class': 'block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider'}}) }}

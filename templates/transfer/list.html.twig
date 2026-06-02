@@ -4,9 +4,9 @@
 
 {% block content %}
 <div class="max-w-5xl mx-auto space-y-7">
-    <div class="flex items-center justify-between animate-in">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 animate-in">
         <div>
-            <h1 class="text-2xl font-light tracking-wide text-white/90">Transfers</h1>
+            <h1 class="text-xl sm:text-2xl font-light tracking-wide text-white/90">Transfers</h1>
             <p class="text-white/35 mt-1 text-sm">Manage your file transfers</p>
         </div>
         <a href="{{ path('app_upload') }}" class="aero-btn-primary px-5 py-2.5 text-sm flex items-center gap-2">
@@ -17,22 +17,22 @@
 
     {% if transfers|length > 0 %}
     <div class="glass animate-in" style="animation-delay: 0.1s">
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto table-responsive">
             <table class="w-full">
                 <thead>
                     <tr class="text-white/30 text-xs uppercase tracking-wider border-b border-white/5">
-                        <th class="px-6 py-3.5 text-left">Filename</th>
-                        <th class="px-6 py-3.5 text-left">Size</th>
-                        <th class="px-6 py-3.5 text-left">Downloads</th>
-                        <th class="px-6 py-3.5 text-left">Expires</th>
-                        <th class="px-6 py-3.5 text-left">Status</th>
-                        <th class="px-6 py-3.5 text-left">Actions</th>
+                        <th class="px-3 sm:px-6 py-3 text-left">Filename</th>
+                        <th class="px-3 sm:px-6 py-3 text-left">Size</th>
+                        <th class="px-3 sm:px-6 py-3 text-left">Downloads</th>
+                        <th class="px-3 sm:px-6 py-3 text-left">Expires</th>
+                        <th class="px-3 sm:px-6 py-3 text-left">Status</th>
+                        <th class="px-3 sm:px-6 py-3 text-left">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for transfer in transfers %}
                     <tr class="border-b border-white/5 hover:bg-white/[0.03] transition" id="transfer-{{ transfer.id }}">
-                        <td class="px-6 py-3.5">
+                        <td class="px-3 sm:px-6 py-2.5 sm:py-3">
                             <div class="flex items-center gap-2">
                                 <span class="text-white/80 font-medium text-sm">{{ transfer.originalFilename }}</span>
                                 {% if transfer.isFromLibrary %}
@@ -48,10 +48,10 @@
                                 {% endif %}
                             </div>
                         </td>
-                        <td class="px-6 py-3.5 text-white/45 text-sm">{{ transfer.formattedSize }}</td>
-                        <td class="px-6 py-3.5 text-white/45 text-sm">{{ transfer.downloadCount }}/{{ transfer.maxDownloads }}</td>
-                        <td class="px-6 py-3.5 text-white/45 text-sm">{{ transfer.expiresAt|date('M j, Y') }}</td>
-                        <td class="px-6 py-3.5" id="status-{{ transfer.id }}">
+                        <td class="px-3 sm:px-6 py-3 text-white/45 text-sm">{{ transfer.formattedSize }}</td>
+                        <td class="px-3 sm:px-6 py-3 text-white/45 text-sm">{{ transfer.downloadCount }}/{{ transfer.maxDownloads }}</td>
+                        <td class="px-3 sm:px-6 py-3 text-white/45 text-sm">{{ transfer.expiresAt|date('M j, Y') }}</td>
+                        <td class="px-3 sm:px-6 py-2.5 sm:py-3" id="status-{{ transfer.id }}">
                             {% if transfer.isDownloadable %}
                                 <span class="status-badge status-active">Active</span>
                             {% elseif transfer.isExpired %}
@@ -62,7 +62,7 @@
                                 <span class="status-badge status-exhausted">Exhausted</span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-3.5">
+                        <td class="px-3 sm:px-6 py-2.5 sm:py-3">
                             <div class="flex gap-2">
                                 <button onclick="copyLink('{{ transfer.id }}')" class="text-white/25 hover:text-aero transition p-1" title="Copy link">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 0H10m0 0V9m0 4h2m4-4v3"/></svg>

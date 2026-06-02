@@ -3,9 +3,9 @@
 {% block title %}Upload - FileShareZ{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto space-y-7">
+<div class="max-w-2xl mx-auto space-y-6 sm:space-y-7">
     <div class="animate-in">
-        <h1 class="text-2xl font-light tracking-wide text-white/90">Upload</h1>
+        <h1 class="text-xl sm:text-2xl font-light tracking-wide text-white/90">Upload</h1>
         <p class="text-white/35 mt-1 text-sm">Share files securely with expiring download links</p>
     </div>
 
@@ -13,19 +13,19 @@
         <div class="flex gap-2">
             <button @click="mode = 'file'"
                 :class="mode === 'file' ? 'aero-btn-primary' : 'aero-btn'"
-                class="px-5 py-2 text-sm transition">
+                class="flex-1 sm:flex-none px-4 sm:px-5 py-2 text-sm transition">
                 File Upload
             </button>
             <button @click="mode = 'text'"
                 :class="mode === 'text' ? 'aero-btn-primary' : 'aero-btn'"
-                class="px-5 py-2 text-sm transition">
+                class="flex-1 sm:flex-none px-4 sm:px-5 py-2 text-sm transition">
                 Text Upload
             </button>
         </div>
 
         <div x-show="mode === 'file'" x-transition>
             <div id="drop-zone"
-                class="glass p-12 text-center cursor-pointer transition-all border-2 border-dashed border-white/8 animate-pulse-glow"
+                class="glass p-8 sm:p-12 text-center cursor-pointer transition-all border-2 border-dashed border-white/8 animate-pulse-glow"
                 ondragover="event.preventDefault(); this.classList.add('drop-zone-active')"
                 ondragleave="this.classList.remove('drop-zone-active')"
                 ondrop="event.preventDefault(); this.classList.remove('drop-zone-active'); handleFiles(event.dataTransfer.files)"

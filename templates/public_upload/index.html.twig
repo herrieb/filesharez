@@ -4,7 +4,7 @@
 
 {% block body %}
 <div class="min-h-screen flex items-center justify-center p-4">
-    <div class="glass animate-in p-10 w-full max-w-lg" style="box-shadow: 0 0 80px rgba(108,178,255,0.06), 0 16px 48px rgba(0,0,0,0.5);">
+    <div class="glass animate-in p-6 sm:p-10 w-full max-w-lg" style="box-shadow: 0 0 80px rgba(108,178,255,0.06), 0 16px 48px rgba(0,0,0,0.5);">
         <div class="text-center mb-8">
             <div class="w-16 h-16 rounded-2xl bg-aero/10 flex items-center justify-center mx-auto mb-4 border border-aero/20">
                 <svg class="w-9 h-9 text-aero/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
@@ -45,12 +45,12 @@
         {% endif %}
 
         <div id="upload-form" class="{{ needsPassword ? 'hidden' : '' }} space-y-5">
-            <div id="drop-zone"
-                class="glass p-10 text-center cursor-pointer transition-all border-2 border-dashed border-white/8 animate-pulse-glow"
-                ondragover="event.preventDefault(); this.classList.add('drop-zone-active')"
-                ondragleave="this.classList.remove('drop-zone-active')"
-                ondrop="event.preventDefault(); this.classList.remove('drop-zone-active'); handleFiles(event.dataTransfer.files)"
-                onclick="document.getElementById('file-input').click()">
+        <div id="drop-zone"
+            class="glass p-8 sm:p-10 text-center cursor-pointer transition-all border-2 border-dashed border-white/8 animate-pulse-glow"
+            ondragover="event.preventDefault(); this.classList.add('drop-zone-active')"
+            ondragleave="this.classList.remove('drop-zone-active')"
+            ondrop="event.preventDefault(); this.classList.remove('drop-zone-active'); handleFiles(event.dataTransfer.files)"
+            onclick="document.getElementById('file-input').click()">
                 <svg class="w-12 h-12 text-aero/30 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
                 <p class="text-white/55 text-base font-light">Drag & drop files here</p>
                 <p class="text-white/25 text-sm mt-1">or click to browse</p>

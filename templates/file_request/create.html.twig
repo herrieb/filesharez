@@ -3,13 +3,13 @@
 {% block title %}Create File Request - FileShareZ{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto space-y-7">
+<div class="max-w-2xl mx-auto space-y-6 sm:space-y-7">
     <div class="animate-in">
-        <h1 class="text-2xl font-light tracking-wide text-white/90">Create File Request</h1>
+        <h1 class="text-xl sm:text-2xl font-light tracking-wide text-white/90">Create File Request</h1>
         <p class="text-white/35 mt-1 text-sm">Generate a link where others can upload files to you</p>
     </div>
 
-    <form id="create-request-form" class="glass p-8 space-y-5">
+    <form id="create-request-form" class="glass p-6 sm:p-8 space-y-5">
         <div class="window-header -mt-8 -mx-8 mb-6">
             <span class="text-xs text-white/40 uppercase tracking-wider">New Request</span>
             <span></span>
@@ -25,7 +25,7 @@
             <textarea id="fr-description" class="form-input w-full" rows="3" placeholder="Add instructions for uploaders..."></textarea>
         </div>
 
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
                 <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Max Uploads</label>
                 <input type="number" id="fr-max-files" class="form-input w-full" value="10" min="1" max="100">

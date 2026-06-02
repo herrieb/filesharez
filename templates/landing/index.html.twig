@@ -565,15 +565,17 @@
         .security-layout { grid-template-columns: 1fr; }
     }
     @media (max-width: 640px) {
+        .hero-section { min-height: auto; padding: 90px 16px 40px; }
         .hero-headline { font-size: 2rem; }
-        .floating-nav { padding: 10px 14px; }
+        .hero-headline br { display: none; }
+        .floating-nav { padding: 10px 14px; flex-wrap: wrap; }
         .nav-links { gap: 12px; }
         .nav-link { font-size: 12px; }
         .features-section { padding: 60px 16px; }
         .security-section { padding: 60px 16px; }
         .cta-section { padding: 60px 16px; }
         .cta-section .glass { padding: 2rem 1.5rem !important; }
-        .hero-section { padding: 80px 16px 40px; }
+        .glow-1, .glow-2 { width: 240px; height: 240px; }
     }
 </style>
 {% endblock %}

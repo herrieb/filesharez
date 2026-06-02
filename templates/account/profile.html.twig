@@ -3,13 +3,13 @@
 {% block title %}Edit Profile - FileShareZ{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto space-y-7">
+<div class="max-w-2xl mx-auto space-y-6 sm:space-y-7">
     <div class="animate-in">
         <a href="{{ path('app_account') }}" class="text-aero/60 hover:text-aero text-xs uppercase tracking-wider">&larr; Back to Account</a>
-        <h1 class="text-2xl font-light tracking-wide text-white/90 mt-2">Edit Profile</h1>
+        <h1 class="text-xl sm:text-2xl font-light tracking-wide text-white/90 mt-2">Edit Profile</h1>
         <p class="text-white/35 mt-1 text-sm">Update your display name and email</p>
     </div>
-    <div class="glass animate-in p-8" style="animation-delay: 0.1s">
+    <div class="glass animate-in p-6 sm:p-8" style="animation-delay: 0.1s">
         {{ form_start(form) }}
             <div class="space-y-5">
                 <div>
