@@ -35,6 +35,9 @@
                         <td class="px-6 py-3.5">
                             <div class="flex items-center gap-2">
                                 <span class="text-white/80 font-medium text-sm">{{ transfer.originalFilename }}</span>
+                                {% if transfer.isFromLibrary %}
+                                    <span class="text-[10px] bg-warn/15 text-warn px-2 py-0.5 rounded-full border border-warn/20">Library</span>
+                                {% endif %}
                                 {% if transfer.fileRequest %}
                                     <span class="text-[10px] bg-purple-500/15 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/20">Request</span>
                                 {% endif %}
@@ -94,13 +97,14 @@
 </div>
 
 <script>
-const transferTokens = {{ {
-} | json_encode | raw }};
-{% for transfer in transfers %}transferTokens['{{ transfer.id }}'] = '{{ transfer.rawToken ?? '' }}';{% endfor %}
+const transferTokens = {{ (savedTokens|default({}))|json_encode|raw }};
 
 function copyLink(id) {
     const token = transferTokens[id];
-    if (!token) { alert('Link not available — created before this session'); return; }
+    if (!token) {
+        alert('This share link is no longer recoverable from this page. The transfer is still active — refresh after a moment, or use the download page directly.');
+        return;
+    }
     const url = window.location.origin + '/d/' + token;
     navigator.clipboard.writeText(url);
     const btn = event.currentTarget;
