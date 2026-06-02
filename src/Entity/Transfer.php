@@ -65,6 +65,13 @@ class Transfer
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?FileRequest $fileRequest = null;
 
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $isFromLibrary = false;
+
+    #[ORM\ManyToOne(targetEntity: LibraryItem::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?LibraryItem $libraryItem = null;
+
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $senderName = null;
 
@@ -344,6 +351,28 @@ class Transfer
     public function setSenderName(?string $senderName): static
     {
         $this->senderName = $senderName;
+        return $this;
+    }
+
+    public function isFromLibrary(): bool
+    {
+        return $this->isFromLibrary;
+    }
+
+    public function setIsFromLibrary(bool $isFromLibrary): static
+    {
+        $this->isFromLibrary = $isFromLibrary;
+        return $this;
+    }
+
+    public function getLibraryItem(): ?LibraryItem
+    {
+        return $this->libraryItem;
+    }
+
+    public function setLibraryItem(?LibraryItem $libraryItem): static
+    {
+        $this->libraryItem = $libraryItem;
         return $this;
     }
 

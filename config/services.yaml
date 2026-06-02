@@ -3,6 +3,7 @@ parameters:
     app.max_upload_size: '%env(MAX_UPLOAD_SIZE)%'
     app.default_expiry_days: '%env(int:DEFAULT_EXPIRY_DAYS)%'
     app.default_max_downloads: '%env(int:DEFAULT_MAX_DOWNLOADS)%'
+    app.library_path: '%env(default::LIBRARY_PATH)%'
 
 services:
     _defaults:
@@ -24,7 +25,16 @@ services:
         arguments:
             $storagePath: '/app/storage'
 
+    App\Storage\LibraryStorage:
+        arguments:
+            $libraryPath: '%app.library_path%'
+
     App\Service\TransferService:
+        arguments:
+            $defaultExpiryDays: '%app.default_expiry_days%'
+            $defaultMaxDownloads: '%app.default_max_downloads%'
+
+    App\Service\LibraryService:
         arguments:
             $defaultExpiryDays: '%app.default_expiry_days%'
             $defaultMaxDownloads: '%app.default_max_downloads%'

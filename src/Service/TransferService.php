@@ -2,10 +2,12 @@
 
 namespace App\Service;
 
+use App\Entity\SavedTransferToken;
 use App\Entity\Transfer;
 use App\Entity\TransferFile;
 use App\Entity\User;
 use App\Message\SendTransferEmail;
+use App\Repository\SavedTransferTokenRepository;
 use App\Repository\TransferRepository;
 use App\Storage\StorageInterface;
 use Doctrine\ORM\EntityManagerInterface;
@@ -16,12 +18,30 @@ class TransferService
 {
     public function __construct(
         private TransferRepository $transferRepository,
+        private SavedTransferTokenRepository $savedTokenRepository,
         private EntityManagerInterface $entityManager,
         private StorageInterface $storage,
         private MessageBusInterface $messageBus,
         private int $defaultExpiryDays,
         private int $defaultMaxDownloads,
     ) {
+    }
+
+    private function saveTokenForOwner(Transfer $transfer, User $user): void
+    {
+        if ($transfer->getRawToken() === null) {
+            return;
+        }
+        $existing = $this->savedTokenRepository->findOneByUserAndTransfer($user, $transfer);
+        if ($existing) {
+            return;
+        }
+        $saved = new SavedTransferToken();
+        $saved->setUser($user)
+            ->setTransfer($transfer)
+            ->setRawToken($transfer->getRawToken());
+        $this->entityManager->persist($saved);
+        $this->entityManager->flush();
     }
 
     public function createFileTransfer(
@@ -72,6 +92,8 @@ class TransferService
 
         $this->entityManager->persist($transfer);
         $this->entityManager->flush();
+
+        $this->saveTokenForOwner($transfer, $user);
 
         if ($recipientEmail) {
             $this->messageBus->dispatch(new SendTransferEmail(
@@ -137,6 +159,8 @@ class TransferService
         $this->entityManager->persist($transfer);
         $this->entityManager->flush();
 
+        $this->saveTokenForOwner($transfer, $user);
+
         if ($recipientEmail) {
             $this->messageBus->dispatch(new SendTransferEmail(
                 $transfer->getId(),
@@ -170,9 +194,11 @@ class TransferService
 
     public function deleteTransfer(Transfer $transfer): void
     {
-        foreach ($transfer->getFiles() as $file) {
-            if ($this->storage->exists($file->getStoredFilename())) {
-                $this->storage->delete($file->getStoredFilename());
+        if (!$transfer->isFromLibrary()) {
+            foreach ($transfer->getFiles() as $file) {
+                if ($this->storage->exists($file->getStoredFilename())) {
+                    $this->storage->delete($file->getStoredFilename());
+                }
             }
         }
 

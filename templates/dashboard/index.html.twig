@@ -56,6 +56,9 @@
                         <td class="px-6 py-3.5">
                             <div class="flex items-center gap-2">
                                 <span class="text-white/80 font-medium text-sm">{{ transfer.originalFilename }}</span>
+                                {% if transfer.isFromLibrary %}
+                                    <span class="text-[10px] bg-warn/15 text-warn px-2 py-0.5 rounded-full border border-warn/20">Library</span>
+                                {% endif %}
                                 {% if transfer.fileRequest %}
                                     <span class="text-[10px] bg-purple-500/15 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/20">Request</span>
                                 {% endif %}

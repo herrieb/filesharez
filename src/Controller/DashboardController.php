@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Repository\SavedTransferTokenRepository;
 use App\Repository\TransferRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Attribute\Route;
@@ -13,7 +14,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class DashboardController extends AbstractController
 {
     #[Route('/', name: 'app_dashboard')]
-    public function index(TransferRepository $transferRepository): \Symfony\Component\HttpFoundation\Response
+    public function index(TransferRepository $transferRepository, SavedTransferTokenRepository $savedTokenRepository): \Symfony\Component\HttpFoundation\Response
     {
         /** @var User $user */
         $user = $this->getUser();
@@ -28,6 +29,9 @@ class DashboardController extends AbstractController
         $activeTransfersList = array_filter($transfers, fn($t) => $t->isDownloadable());
         $expiringSoon = array_filter($activeTransfersList, fn($t) => $t->getExpiresAt() < (new \DateTimeImmutable())->modify('+24 hours'));
 
+        $ids = array_map(fn($t) => $t->getId(), $transfers);
+        $savedTokens = $savedTokenRepository->findRawTokensForUser($user, $ids);
+
         return $this->render('dashboard/index.html.twig', [
             'activeTransfers' => $activeTransfers,
             'quotaUsed' => $totalUsed,
@@ -35,6 +39,7 @@ class DashboardController extends AbstractController
             'quotaPercent' => $quotaPercent,
             'recentTransfers' => array_slice($transfers, 0, 10),
             'expiringSoon' => count($expiringSoon),
+            'savedTokens' => $savedTokens,
         ]);
     }
 }

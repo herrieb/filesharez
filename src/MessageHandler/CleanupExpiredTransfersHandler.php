@@ -30,6 +30,9 @@ class CleanupExpiredTransfersHandler
         foreach ($transfers as $transfer) {
             try {
                 foreach ($transfer->getFiles() as $file) {
+                    if ($transfer->isFromLibrary()) {
+                        continue;
+                    }
                     if ($this->storage->exists($file->getStoredFilename())) {
                         $this->storage->delete($file->getStoredFilename());
                     }

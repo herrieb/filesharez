@@ -32,6 +32,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY docker/php/custom.ini /usr/local/etc/php/conf.d/custom.ini
 COPY docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
+COPY docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 RUN adduser -u 1000 -D -H -s /bin/sh appuser
 
@@ -49,4 +51,5 @@ USER root
 
 EXPOSE 9000
 
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["php-fpm"]

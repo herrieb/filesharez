@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Message\SendDownloadNotificationEmail;
 use App\Service\DownloadService;
+use App\Service\LibraryStorageStreamer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,6 +16,7 @@ class DownloadController extends AbstractController
 {
     public function __construct(
         private MessageBusInterface $messageBus,
+        private LibraryStorageStreamer $libraryStreamer,
     ) {
     }
 
@@ -87,6 +89,18 @@ class DownloadController extends AbstractController
                 $transfer->getSenderEmail() ?? '',
                 $transfer->getSenderName(),
             ));
+        }
+
+        // For library-backed files (especially directories that need to be
+        // packaged as ZIP on the fly), stream directly to the output so the
+        // client starts receiving bytes immediately instead of waiting for
+        // the whole archive to buffer in PHP memory.
+        if ($transfer->isFromLibrary()) {
+            return $this->libraryStreamer->buildFileResponse(
+                $transferFile->getStoredFilename(),
+                $downloadResult->filename,
+                $downloadResult->size > 0 ? $downloadResult->size : null,
+            );
         }
 
         $response = new StreamedResponse(function () use ($downloadResult) {

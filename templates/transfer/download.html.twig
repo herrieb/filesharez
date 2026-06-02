@@ -156,9 +156,13 @@
             </div>
         {% else %}
             <a href="{{ path('app_download_file', {token: token, fileId: transfer.files.first.id}) }}" class="aero-btn-primary block text-center w-full py-3 text-sm">
-                Download File
+                {{ transfer.libraryItem and transfer.libraryItem.isDirectory ? 'Download Folder (ZIP)' : 'Download File' }}
             </a>
         {% endif %}
+        {% endif %}
+
+        {% if transfer.libraryItem and transfer.libraryItem.isDirectory %}
+            <p class="text-warn/60 text-xs text-center mt-3 font-light">Folder will be packaged as a ZIP archive</p>
         {% endif %}
 
         <p class="text-white/15 text-xs text-center mt-6 font-light">This link will expire and can only be downloaded {{ transfer.maxDownloads }} time{{ transfer.maxDownloads > 1 ? 's' : '' }}.</p>

@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Transfer;
+use App\Repository\SavedTransferTokenRepository;
 use App\Repository\TransferRepository;
 use App\Service\TransferService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -15,13 +16,31 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class TransferController extends AbstractController
 {
     #[Route('/', name: 'app_transfers')]
-    public function list(TransferRepository $transferRepository): \Symfony\Component\HttpFoundation\Response
+    public function list(TransferRepository $transferRepository, SavedTransferTokenRepository $savedTokenRepository): \Symfony\Component\HttpFoundation\Response
     {
         $user = $this->getUser();
         $transfers = $transferRepository->findByUserOrderedByRecent($user->getId());
 
+        $ids = array_map(fn($t) => $t->getId(), $transfers);
+        $savedTokens = $savedTokenRepository->findRawTokensForUser($user, $ids);
+
+        $session = $request = null;
+        $session = $this->container->get('request_stack')->getSession();
+        $sessionMap = $session->get('transfer_tokens', []);
+
+        $tokens = [];
+        foreach ($transfers as $t) {
+            $tid = $t->getId();
+            if (isset($savedTokens[$tid])) {
+                $tokens[$tid] = $savedTokens[$tid];
+            } elseif (isset($sessionMap[$tid])) {
+                $tokens[$tid] = $sessionMap[$tid];
+            }
+        }
+
         return $this->render('transfer/list.html.twig', [
             'transfers' => $transfers,
+            'savedTokens' => $tokens,
         ]);
     }
 
