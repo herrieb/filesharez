@@ -15,8 +15,8 @@ echo ""
 # --- 1. All containers running ---
 echo "--- Container Health ---"
 for svc in app nginx postgres redis worker scheduler mailpit; do
-  STATUS=$(docker compose ps "$svc" --format '{{.Status}}' 2>/dev/null || echo "")
-  if echo "$STATUS" | grep -qi "up"; then
+  STATUS=$(docker-compose ps "$svc" 2>/dev/null | grep -i "up" || echo "")
+  if [ -n "$STATUS" ]; then
     ok "$svc is running"
   else
     fail "$svc is NOT running (status: $STATUS)"
@@ -26,13 +26,13 @@ echo ""
 
 # --- 2. PostgreSQL reachable ---
 echo "--- Database ---"
-if docker compose exec -T postgres pg_isready -U filesharez >/dev/null 2>&1; then
+if docker-compose exec -T postgres pg_isready -U filesharez >/dev/null 2>&1; then
   ok "PostgreSQL accepts connections"
 else
   fail "PostgreSQL not accepting connections"
 fi
 
-TABLE_COUNT=$(docker compose exec -T postgres psql -U filesharez -d filesharez -t -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'" 2>/dev/null | tr -d ' ')
+TABLE_COUNT=$(docker-compose exec -T postgres psql -U filesharez -d filesharez -t -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'" 2>/dev/null | tr -d ' ')
 if [ "$TABLE_COUNT" -ge 3 ]; then
   ok "Database has $TABLE_COUNT tables"
 else
@@ -42,7 +42,7 @@ echo ""
 
 # --- 3. Redis reachable ---
 echo "--- Redis ---"
-PONG=$(docker compose exec -T redis redis-cli ping 2>/dev/null | tr -d '\r\n')
+PONG=$(docker-compose exec -T redis redis-cli ping 2>/dev/null | tr -d '\r\n')
 if [ "$PONG" = "PONG" ]; then
   ok "Redis responds PONG"
 else
@@ -70,7 +70,7 @@ fi
 # --- 6. Login works ---
 LOGIN_CODE=$(curl -s -b "$COOKIE_JAR" -c "$COOKIE_JAR" -o /dev/null -w "%{http_code}" \
   -X POST "$BASE/login" \
-  -d "email=admin@filesharez.local&password=changeme&_csrf_token=$CSRF" \
+  -d "email=admin@example.com&password=YourSecurePassword123!&_csrf_token=$CSRF" \
   -L)
 if [ "$LOGIN_CODE" = "200" ]; then
   ok "Login succeeds and redirects to dashboard (200)"
