@@ -449,7 +449,8 @@
         const qrDiv = document.getElementById('success-qr');
         qrDiv.innerHTML = '';
         if (typeof QRCode !== 'undefined') {
-            new QRCode(qrDiv, { text: url, width: 120, height: 120, colorDark: '#8EC5FF', colorLight: 'transparent', correctLevel: QRCode.CorrectLevel.M });
+            const qrColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-glow').trim() || '#8EC5FF';
+            new QRCode(qrDiv, { text: url, width: 120, height: 120, colorDark: qrColor, colorLight: 'transparent', correctLevel: QRCode.CorrectLevel.M });
         }
         success.classList.remove('hidden');
         success.scrollIntoView({ behavior: 'smooth' });

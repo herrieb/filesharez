@@ -39,6 +39,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'boolean', options: ['default' => true])]
     private bool $isActive = true;
 
+    #[ORM\Column(type: 'string', length: 32, options: ['default' => 'longhorn'])]
+    private string $theme = 'longhorn';
+
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $createdAt;
 
@@ -140,6 +143,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setReservedBytes(int $reservedBytes): static
     {
         $this->reservedBytes = max(0, $reservedBytes);
+        return $this;
+    }
+
+    public function getTheme(): string
+    {
+        return $this->theme;
+    }
+
+    public function setTheme(string $theme): static
+    {
+        $this->theme = $theme;
         return $this;
     }
 

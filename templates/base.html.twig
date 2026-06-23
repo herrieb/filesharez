@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en" class="h-full" data-theme="{{ app.request.attributes.get('_theme_id', 'longhorn') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}FileShareZ{% endblock %}</title>
     <meta name="description" content="Secure file sharing platform">
-    <meta name="theme-color" content="#1B1E24">
+    <meta name="theme-color" content="{{ app.request.attributes.get('_theme').slateBase }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.10/dist/cdn.min.js"></script>
     <script>
@@ -19,9 +19,6 @@
                         danger: '#EF4444',
                         warn: '#F59E0B',
                     },
-                    fontFamily: {
-                        sans: ['"Segoe UI"', 'Inter', 'Geist', 'system-ui', 'sans-serif'],
-                    },
                 }
             }
         }
@@ -29,16 +26,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    {{ theme_block()|raw }}
     <style>
         *, *::before, *::after { box-sizing: border-box; }
 
         body {
-            background: #101217;
+            background-color: var(--slate-deep);
             background-image:
-                radial-gradient(circle at top left, rgba(120,170,255,0.12), transparent 35%),
-                radial-gradient(circle at bottom right, rgba(255,255,255,0.04), transparent 25%),
-                linear-gradient(180deg, #1B1E24 0%, #101217 100%);
-            font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
+                var(--ambient-glow-1),
+                var(--ambient-glow-2),
+                var(--body-gradient);
+            font-family: var(--font-family);
             color: #E5E7EB;
             min-height: 100vh;
             overflow-x: hidden;
@@ -100,25 +99,25 @@
         }
         .aero-btn:hover {
             background: linear-gradient(180deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
-            box-shadow: 0 0 24px rgba(108,178,255,0.3), 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+            box-shadow: 0 0 24px rgba(var(--accent-rgb), 0.3), 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
             color: #fff;
             transform: translateY(-1px);
         }
         .aero-btn:active { transform: translateY(0); }
 
         .aero-btn-primary {
-            background: linear-gradient(180deg, rgba(108,178,255,0.35), rgba(108,178,255,0.12));
-            border: 1px solid rgba(108,178,255,0.35);
+            background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.35), rgba(var(--accent-rgb), 0.12));
+            border: 1px solid rgba(var(--accent-rgb), 0.35);
             border-radius: 14px;
-            color: #8EC5FF;
+            color: var(--accent-glow);
             font-weight: 600;
             transition: all 0.3s ease;
-            box-shadow: 0 0 20px rgba(108,178,255,0.2), 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12);
+            box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.2), 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12);
             cursor: pointer;
         }
         .aero-btn-primary:hover {
-            background: linear-gradient(180deg, rgba(108,178,255,0.5), rgba(108,178,255,0.2));
-            box-shadow: 0 0 30px rgba(108,178,255,0.4), 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+            background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.5), rgba(var(--accent-rgb), 0.2));
+            box-shadow: 0 0 30px rgba(var(--accent-rgb), 0.4), 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
             color: #fff;
             transform: translateY(-1px);
         }
@@ -133,8 +132,8 @@
         }
         .form-input:focus {
             outline: none;
-            border-color: rgba(108,178,255,0.5);
-            box-shadow: 0 0 16px rgba(108,178,255,0.15), inset 0 1px 0 rgba(255,255,255,0.08);
+            border-color: rgba(var(--accent-rgb), 0.5);
+            box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.15), inset 0 1px 0 rgba(255,255,255,0.08);
             background: rgba(255,255,255,0.09);
         }
         .form-input::placeholder { color: rgba(255,255,255,0.25); }
@@ -177,33 +176,33 @@
         }
         .taskbar-item:hover {
             background: rgba(255,255,255,0.1);
-            color: #8EC5FF;
-            box-shadow: 0 0 12px rgba(108,178,255,0.15);
+            color: var(--accent-glow);
+            box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.15);
         }
         .taskbar-item.active {
-            background: rgba(108,178,255,0.15);
-            color: #8EC5FF;
-            box-shadow: 0 0 16px rgba(108,178,255,0.2);
+            background: rgba(var(--accent-rgb), 0.15);
+            color: var(--accent-glow);
+            box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.2);
         }
 
         .taskbar-orb {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, rgba(108,178,255,0.3), rgba(108,178,255,0.1));
-            border: 1px solid rgba(108,178,255,0.3);
+            background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.3), rgba(var(--accent-rgb), 0.1));
+            border: 1px solid rgba(var(--accent-rgb), 0.3);
             display: flex;
             align-items: center;
             justify-content: center;
             margin-right: 8px;
             transition: all 0.3s ease;
-            box-shadow: 0 0 16px rgba(108,178,255,0.15), inset 0 1px 0 rgba(255,255,255,0.15);
+            box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.15), inset 0 1px 0 rgba(255,255,255,0.15);
             cursor: pointer;
             flex-shrink: 0;
         }
         .taskbar-orb:hover {
-            background: linear-gradient(135deg, rgba(108,178,255,0.5), rgba(108,178,255,0.2));
-            box-shadow: 0 0 24px rgba(108,178,255,0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+            background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.5), rgba(var(--accent-rgb), 0.2));
+            box-shadow: 0 0 24px rgba(var(--accent-rgb), 0.35), inset 0 1px 0 rgba(255,255,255,0.2);
         }
 
         .taskbar-divider {
@@ -260,7 +259,7 @@
         .mobile-tab svg { width: 22px; height: 22px; }
         .mobile-tab span { line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         .mobile-tab:active { transform: scale(0.92); }
-        .mobile-tab.active { color: #8EC5FF; }
+        .mobile-tab.active { color: var(--accent-glow); }
         .mobile-tab.active::before {
             content: '';
             position: absolute;
@@ -270,10 +269,10 @@
             width: 24px;
             height: 3px;
             border-radius: 0 0 3px 3px;
-            background: linear-gradient(180deg, #8EC5FF, rgba(108,178,255,0.3));
-            box-shadow: 0 0 8px rgba(108,178,255,0.5);
+            background: linear-gradient(180deg, var(--accent-glow), rgba(var(--accent-rgb), 0.3));
+            box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.5);
         }
-        .mobile-tab.active svg { filter: drop-shadow(0 0 6px rgba(108,178,255,0.5)); }
+        .mobile-tab.active svg { filter: drop-shadow(0 0 6px rgba(var(--accent-rgb), 0.5)); }
 
         /* -------- Mobile More sheet (iOS action sheet) -------- */
         .mobile-more-sheet {
@@ -331,8 +330,8 @@
         }
         .mobile-more-link:active { background: rgba(255,255,255,0.08); }
         .mobile-more-link.active {
-            background: rgba(108,178,255,0.12);
-            color: #8EC5FF;
+            background: rgba(var(--accent-rgb), 0.12);
+            color: var(--accent-glow);
         }
         .mobile-more-link svg { flex-shrink: 0; }
         .mobile-more-divider {
@@ -359,11 +358,11 @@
             height: 8px;
         }
         .progress-bar-fill {
-            background: linear-gradient(90deg, #6CB2FF, #8EC5FF);
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-glow));
             border-radius: 999px;
             height: 100%;
             transition: width 0.4s ease;
-            box-shadow: 0 0 12px rgba(108,178,255,0.4);
+            box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.4);
             position: relative;
         }
         .progress-bar-fill::after {
@@ -379,8 +378,8 @@
             to { opacity: 1; filter: blur(0); transform: translateY(0); }
         }
         @keyframes pulseGlow {
-            0%, 100% { box-shadow: 0 0 16px rgba(108,178,255,0.1); }
-            50% { box-shadow: 0 0 32px rgba(108,178,255,0.25); }
+            0%, 100% { box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.1); }
+            50% { box-shadow: 0 0 32px rgba(var(--accent-rgb), 0.25); }
         }
         @keyframes shimmer {
             0% { background-position: -200% center; }
@@ -395,9 +394,9 @@
         }
 
         .drop-zone-active {
-            border-color: rgba(108,178,255,0.5) !important;
-            background: rgba(108,178,255,0.06) !important;
-            box-shadow: 0 0 32px rgba(108,178,255,0.15), inset 0 0 24px rgba(108,178,255,0.05) !important;
+            border-color: rgba(var(--accent-rgb), 0.5) !important;
+            background: rgba(var(--accent-rgb), 0.06) !important;
+            box-shadow: 0 0 32px rgba(var(--accent-rgb), 0.15), inset 0 0 24px rgba(var(--accent-rgb), 0.05) !important;
         }
 
         .status-active { background: rgba(16,185,129,0.12); color: #10B981; border: 1px solid rgba(16,185,129,0.2); }
@@ -406,7 +405,6 @@
         .status-revoked { background: rgba(239,68,68,0.1); color: #EF4444; border: 1px solid rgba(239,68,68,0.2); }
         .status-badge { padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; }
 
-        /* Tables: keep min-width so columns don't crush, scroll on small screens */
         .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .table-responsive table { min-width: 640px; }
         .table-responsive th,
@@ -414,18 +412,47 @@
         .table-responsive th:first-child,
         .table-responsive td:first-child { white-space: normal; }
 
-        /* Hide desktop table cells beyond a certain index on small screens */
         @media (max-width: 640px) {
             .hide-sm { display: none !important; }
         }
 
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-        ::-webkit-scrollbar-thumb { background: rgba(108,178,255,0.2); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(108,178,255,0.35); }
+        ::-webkit-scrollbar-thumb { background: rgba(var(--accent-rgb), 0.2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-rgb), 0.35); }
 
         @media (min-width: 768px) {
             .mobile-tabbar, .mobile-more-sheet { display: none !important; }
+        }
+
+        /* -------- Theme picker cards -------- */
+        .theme-card {
+            border-radius: 14px;
+            padding: 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: var(--font-family);
+        }
+        .theme-card:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(var(--accent-rgb), 0.3);
+            transform: translateY(-1px);
+        }
+        .theme-card.active {
+            border-color: rgba(var(--accent-rgb), 0.5);
+            background: rgba(var(--accent-rgb), 0.08);
+            box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.2);
+        }
+        .theme-card-name { font-weight: 600; font-size: 14px; color: #fff; margin-bottom: 4px; }
+        .theme-card-desc { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 10px; line-height: 1.4; }
+        .theme-card-swatches { display: flex; gap: 6px; }
+        .theme-card-swatches .swatch {
+            display: inline-block;
+            width: 24px; height: 24px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.1);
         }
     </style>
     {% block stylesheets %}{% endblock %}

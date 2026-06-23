@@ -5,6 +5,7 @@ parameters:
     app.default_max_downloads: '%env(int:DEFAULT_MAX_DOWNLOADS)%'
     app.library_path: '%env(default::LIBRARY_PATH)%'
     app.library_scan_depth: '%env(int:default::LIBRARY_SCAN_DEPTH)%'
+    app.theme_default: '%env(default::THEME_DEFAULT)%'
 
 services:
     _defaults:
@@ -17,10 +18,23 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+            - '../src/Theme/'
 
     App\Controller\:
         resource: '../src/Controller/'
         tags: ['controller.service_arguments']
+
+    App\Theme\:
+        resource: '../src/Theme/'
+
+    App\Theme\ThemeRegistry:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $defaultId: '%app.theme_default%'
+
+    App\Theme\ThemeStore:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
 
     App\Storage\LocalStorage:
         arguments:

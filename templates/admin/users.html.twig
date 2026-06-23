@@ -34,9 +34,9 @@
                         <td class="px-3 sm:px-6 py-3 text-white/45 text-sm">{{ user.email }}</td>
                         <td class="px-3 sm:px-6 py-2.5 sm:py-3">
                             {% if user.isAdmin %}
-                                <span class="status-badge" style="background:rgba(108,178,255,0.1);color:#6CB2FF;border:1px solid rgba(108,178,255,0.2)">Admin</span>
+                                <span class="status-badge" style="background:rgba(var(--accent-rgb),0.1);color:var(--accent-primary);border:1px solid rgba(var(--accent-rgb),0.2)">Admin</span>
                             {% else %}
-                                <span class="status-badge" style="background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.35);border:1px solid rgba(255,255,255,0.08)">User</span>
+                                <span class="status-badge" style="background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.08)">User</span>
                             {% endif %}
                         </td>
                         <td class="px-3 sm:px-6 py-2.5 sm:py-3">

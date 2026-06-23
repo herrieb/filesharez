@@ -10,7 +10,7 @@
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10" stroke="url(#orbGrad)"/>
                 <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                <defs><linearGradient id="orbGrad" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#6CB2FF"/><stop offset="1" stop-color="#8EC5FF" stop-opacity="0.4"/></linearGradient></defs>
+                <defs><linearGradient id="orbGrad" x1="0" y1="0" x2="24" y2="24"><stop style="stop-color:var(--accent-primary)"/><stop offset="1" style="stop-color:var(--accent-glow);stop-opacity:0.4"/></linearGradient></defs>
             </svg>
         </a>
         <span class="nav-brand">FileShareZ</span>
@@ -159,15 +159,15 @@
                 <p class="feature-desc">Authenticated uploads only. Every transfer is tied to a verified user account &mdash; no anonymous chaos.</p>
             </div>
             <div class="glass animate-in" style="animation-delay:0.4s">
-                <div class="feature-icon-wrap" style="background:rgba(108,178,255,0.16);border-color:rgba(108,178,255,0.32);">
+                <div class="feature-icon-wrap" style="background:rgba(var(--accent-rgb),0.16);border-color:rgba(var(--accent-rgb),0.32);">
                     <svg class="w-6 h-6 text-aero" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7zm0 0v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-8l-2-2H5a2 2 0 00-2 2z"/></svg>
                 </div>
                 <h3 class="feature-title">Personal Library</h3>
                 <p class="feature-desc">Register folders on your server. Browse, share single files, or zip up whole directories &mdash; bulk-select with checkboxes.</p>
             </div>
             <div class="glass animate-in" style="animation-delay:0.45s">
-                <div class="feature-icon-wrap" style="background:rgba(167,139,250,0.16);border-color:rgba(167,139,250,0.32);">
-                    <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <div class="feature-icon-wrap" style="background:rgba(var(--accent-secondary-rgb),0.16);border-color:rgba(var(--accent-secondary-rgb),0.32);">
+                    <svg class="w-6 h-6" style="color:var(--accent-secondary)" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 </div>
                 <h3 class="feature-title">Resumable Uploads</h3>
                 <p class="feature-desc">tus.io-powered chunked transfers. Pause, resume, survive network drops. Per-file progress with speed and ETA.</p>
@@ -286,7 +286,7 @@
         align-items: center;
         gap: 12px;
         padding: 14px 28px;
-        background: rgba(27,30,36,0.55);
+        background: rgba(var(--slate-base-rgb), 0.55);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
         border-bottom: 1px solid rgba(255,255,255,0.06);
@@ -296,18 +296,18 @@
         width: 36px;
         height: 36px;
         border-radius: 50%;
-        background: linear-gradient(135deg, rgba(108,178,255,0.25), rgba(108,178,255,0.08));
-        border: 1px solid rgba(108,178,255,0.25);
+        background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.25), rgba(var(--accent-rgb), 0.08));
+        border: 1px solid rgba(var(--accent-rgb), 0.25);
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.3s ease;
-        box-shadow: 0 0 12px rgba(108,178,255,0.1), inset 0 1px 0 rgba(255,255,255,0.12);
+        box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.1), inset 0 1px 0 rgba(255,255,255,0.12);
         flex-shrink: 0;
     }
     .nav-orb:hover {
-        background: linear-gradient(135deg, rgba(108,178,255,0.4), rgba(108,178,255,0.15));
-        box-shadow: 0 0 20px rgba(108,178,255,0.25), inset 0 1px 0 rgba(255,255,255,0.15);
+        background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.4), rgba(var(--accent-rgb), 0.15));
+        box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.25), inset 0 1px 0 rgba(255,255,255,0.15);
     }
     .nav-brand {
         color: rgba(255,255,255,0.55);
@@ -328,7 +328,7 @@
         text-decoration: none;
         transition: color 0.2s ease;
     }
-    .nav-link:hover { color: #8EC5FF; }
+    .nav-link:hover { color: var(--accent-glow); }
 
     .hero-section {
         min-height: 100vh;
@@ -352,7 +352,7 @@
         font-size: 12px;
         font-weight: 500;
         letter-spacing: 0.2em;
-        color: #6CB2FF;
+        color: var(--accent-primary);
         margin-bottom: 20px;
     }
     .hero-headline {
@@ -364,7 +364,7 @@
         letter-spacing: -0.01em;
     }
     .glow-text {
-        text-shadow: 0 0 40px rgba(108,178,255,0.3), 0 0 80px rgba(108,178,255,0.1);
+        text-shadow: 0 0 40px rgba(var(--accent-rgb), 0.3), 0 0 80px rgba(var(--accent-rgb), 0.1);
     }
     .hero-subtitle {
         font-size: 1.125rem;
@@ -387,7 +387,7 @@
         -webkit-backdrop-filter: blur(24px);
         border: 1px solid rgba(255,255,255,0.12);
         border-radius: 20px;
-        box-shadow: 0 24px 80px rgba(0,0,0,0.4), 0 0 60px rgba(108,178,255,0.06);
+        box-shadow: 0 24px 80px rgba(0,0,0,0.4), 0 0 60px rgba(var(--accent-rgb), 0.06);
         overflow: hidden;
         animation: floatWindow 6s ease-in-out infinite;
     }
@@ -406,11 +406,11 @@
         gap: 12px;
     }
     .drop-zone-mock {
-        border: 2px dashed rgba(108,178,255,0.2);
+        border: 2px dashed rgba(var(--accent-rgb), 0.2);
         border-radius: 14px;
         padding: 28px;
         text-align: center;
-        background: rgba(108,178,255,0.02);
+        background: rgba(var(--accent-rgb), 0.02);
         animation: pulseGlow 4s ease-in-out infinite;
     }
     .transfer-mock {
@@ -437,7 +437,7 @@
 
     .shimmer-bar {
         background-size: 200% 100%;
-        background-image: linear-gradient(90deg, #6CB2FF 0%, #8EC5FF 25%, #6CB2FF 50%, #8EC5FF 75%, #6CB2FF 100%);
+        background-image: linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-glow) 25%, var(--accent-primary) 50%, var(--accent-glow) 75%, var(--accent-primary) 100%);
         animation: shimmer 3s linear infinite;
     }
 
@@ -451,7 +451,7 @@
     .glow-1 {
         width: 500px;
         height: 500px;
-        background: rgba(108,178,255,0.06);
+        background: rgba(var(--accent-rgb), 0.06);
         top: 10%;
         left: -5%;
         animation: driftGlow1 20s ease-in-out infinite;
@@ -489,7 +489,7 @@
         font-size: 11px;
         font-weight: 600;
         letter-spacing: 0.25em;
-        color: #6CB2FF;
+        color: var(--accent-primary);
         margin-bottom: 12px;
     }
     .section-title {
@@ -511,8 +511,8 @@
         width: 44px;
         height: 44px;
         border-radius: 14px;
-        background: rgba(108,178,255,0.08);
-        border: 1px solid rgba(108,178,255,0.15);
+        background: rgba(var(--accent-rgb), 0.08);
+        border: 1px solid rgba(var(--accent-rgb), 0.15);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -555,7 +555,7 @@
     }
     .footer-separator {
         height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(108,178,255,0.15), transparent);
+        background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.15), transparent);
         margin-bottom: 24px;
     }
     .footer-content {
@@ -615,11 +615,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var nav = document.querySelector('.floating-nav');
     if (nav) {
+        var slateRgb = getComputedStyle(document.documentElement).getPropertyValue('--slate-base-rgb').trim();
+        var slate = 'rgba(' + (slateRgb || '27,30,36') + ',';
         window.addEventListener('scroll', function() {
             if (window.scrollY > 50) {
-                nav.style.background = 'rgba(27,30,36,0.85)';
+                nav.style.background = slate + '0.85)';
             } else {
-                nav.style.background = 'rgba(27,30,36,0.55)';
+                nav.style.background = slate + '0.55)';
             }
         });
     }

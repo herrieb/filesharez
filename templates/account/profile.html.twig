@@ -7,8 +7,9 @@
     <div class="animate-in">
         <a href="{{ path('app_account') }}" class="text-aero/60 hover:text-aero text-xs uppercase tracking-wider">&larr; Back to Account</a>
         <h1 class="text-xl sm:text-2xl font-light tracking-wide text-white/90 mt-2">Edit Profile</h1>
-        <p class="text-white/35 mt-1 text-sm">Update your display name and email</p>
+        <p class="text-white/35 mt-1 text-sm">Update your display name, email, and theme</p>
     </div>
+
     <div class="glass animate-in p-6 sm:p-8" style="animation-delay: 0.1s">
         {{ form_start(form) }}
             <div class="space-y-5">
@@ -25,6 +26,51 @@
                 <button type="submit" class="aero-btn-primary px-8 py-2.5 text-sm">Save Changes</button>
             </div>
         {{ form_end(form) }}
+    </div>
+
+    <div class="glass animate-in p-6 sm:p-8" style="animation-delay: 0.15s">
+        <h2 class="text-sm font-medium text-white/50 uppercase tracking-wider mb-1">Theme</h2>
+        <p class="text-white/30 text-xs mb-5">Pick one of the built-in themes or upload your own. Custom themes live in <code class="text-aero/70 text-[11px]">var/themes/</code>.</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="theme-grid">
+            {% for theme in allThemes %}
+                <div class="theme-card {{ user.theme == theme.id ? 'active' : '' }}" data-theme-id="{{ theme.id }}">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0 flex-1">
+                            <div class="theme-card-name">{{ theme.displayName }}</div>
+                            <p class="theme-card-desc">{{ theme.description }}</p>
+                            <div class="theme-card-swatches">
+                                <span class="swatch" style="background:{{ theme.accentPrimary }}" title="Primary"></span>
+                                <span class="swatch" style="background:{{ theme.accentGlow }}" title="Glow"></span>
+                                <span class="swatch" style="background:{{ theme.slateBase }};border-color:rgba(255,255,255,0.3)" title="Base"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mt-3">
+                        <form method="post" action="{{ path('app_account_theme_update') }}" class="inline">
+                            <input type="hidden" name="theme" value="{{ theme.id }}">
+                            <button type="submit" class="aero-btn-primary px-3 py-1.5 text-xs">{{ user.theme == theme.id ? 'Active' : 'Use' }}</button>
+                        </form>
+                        <a href="{{ path('app_account_theme_download', {id: theme.id}) }}" class="aero-btn px-3 py-1.5 text-xs">Download .zip</a>
+                        {% if theme.id not in ['longhorn', 'sunset', 'midori', 'rose-gold', 'crt', 'aurora'] %}
+                            <form method="post" action="{{ path('app_account_theme_delete', {id: theme.id}) }}" class="inline" onsubmit="return confirm('Delete theme &quot;{{ theme.displayName|escape('js') }}&quot;? This cannot be undone.');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('theme_delete_' ~ theme.id) }}">
+                                <button type="submit" class="aero-btn px-3 py-1.5 text-xs hover:text-danger">Delete</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-white/5">
+            <h3 class="text-xs font-medium text-white/50 uppercase tracking-wider mb-3">Upload custom theme</h3>
+            <p class="text-white/30 text-xs mb-4">A theme zip contains a <code class="text-aero/70 text-[11px]">theme.xml</code> descriptor (creator, dates, color tokens) and an optional <code class="text-aero/70 text-[11px]">assets/</code> folder for extra CSS, fonts, and a preview image. Theme ids must be unique and lowercase with dashes.</p>
+            <form method="post" action="{{ path('app_account_theme_upload') }}" enctype="multipart/form-data" class="flex flex-col sm:flex-row gap-3 sm:items-center">
+                <input type="file" name="theme" accept=".zip,application/zip" required class="form-input flex-1 text-xs">
+                <button type="submit" class="aero-btn-primary px-5 py-2.5 text-sm whitespace-nowrap">Upload &amp; Install</button>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}
