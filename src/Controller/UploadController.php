@@ -3,9 +3,8 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Form\UploadType;
 use App\Form\TextUploadType;
-use App\Repository\TransferRepository;
+use App\Form\UploadType;
 use App\Service\TransferService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,7 +19,6 @@ class UploadController extends AbstractController
 {
     public function __construct(
         private TransferService $transferService,
-        private TransferRepository $transferRepository,
     ) {
     }
 
@@ -37,98 +35,16 @@ class UploadController extends AbstractController
             'form' => $form->createView(),
             'textForm' => $textForm->createView(),
             'quotaRemaining' => $user->getQuotaRemaining(),
+            'resumableEndpoint' => $this->generateUrl('app_upload_resumable_create', [], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL),
         ]);
     }
 
-    #[Route('/file', name: 'app_upload_file', methods: ['POST'])]
-    public function uploadFile(Request $request): JsonResponse
+    #[Route('/file', name: 'app_upload_file_legacy', methods: ['POST'])]
+    public function uploadFileLegacy(): JsonResponse
     {
-        /** @var User $user */
-        $user = $this->getUser();
-
-        $files = $request->files->get('files', []);
-        $singleFile = $request->files->get('file');
-
-        if ($singleFile) {
-            $files[] = $singleFile;
-        }
-
-        if (empty($files)) {
-            return $this->json(['error' => 'No files provided'], 400);
-        }
-
-        $allowedMimeTypes = [
-            'application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
-            'text/plain', 'text/csv', 'application/zip', 'application/x-rar-compressed',
-            'application/x-7z-compressed', 'application/gzip', 'video/mp4', 'video/webm',
-            'audio/mpeg', 'audio/ogg', 'audio/wav',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'application/vnd.ms-excel',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        ];
-
-        $validatedFiles = [];
-        foreach ($files as $file) {
-            $mimeType = $file->getMimeType();
-            if (!in_array($mimeType, $allowedMimeTypes) && !str_starts_with($mimeType, 'image/') && !str_starts_with($mimeType, 'text/')) {
-                $mimeType = 'application/octet-stream';
-            }
-            $validatedFiles[] = $file;
-        }
-
-        $maxDownloads = (int) $request->request->get('max_downloads', 1);
-        $expiryDays = (int) $request->request->get('expiry_days', 7);
-        $password = $request->request->get('password');
-        $recipientEmail = $request->request->get('recipient_email');
-        $message = $request->request->get('message');
-
-        $totalSize = 0;
-        foreach ($validatedFiles as $f) {
-            $totalSize += $f->getSize();
-        }
-        if ($user->getQuotaRemaining() < $totalSize) {
-            return $this->json(['error' => 'Insufficient storage quota. You have ' . $this->formatBytes($user->getQuotaRemaining()) . ' remaining, but this upload requires ' . $this->formatBytes($totalSize) . '.'], 400);
-        }
-
-        try {
-            $transfer = $this->transferService->createFileTransfer(
-                $user,
-                $validatedFiles,
-                $maxDownloads ?: null,
-                $expiryDays ?: null,
-                $password ?: null,
-                $recipientEmail ?: null,
-                $message ?: null,
-            );
-
-            $filesData = [];
-            foreach ($transfer->getFiles() as $file) {
-                $filesData[] = [
-                    'id' => $file->getId(),
-                    'filename' => $file->getOriginalFilename(),
-                    'size' => $file->getFormattedSize(),
-                    'mimeType' => $file->getMimeType(),
-                ];
-            }
-
-            return $this->json([
-                'success' => true,
-                'transfer' => [
-                    'id' => $transfer->getId(),
-                    'token' => $transfer->getRawToken(),
-                    'downloadUrl' => $this->generateUrl('app_download', ['token' => $transfer->getRawToken()], \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL),
-                    'files' => $filesData,
-                    'fileCount' => $transfer->getFileCount(),
-                    'totalSize' => $transfer->getFormattedSize(),
-                    'expiresAt' => $transfer->getExpiresAt()->format('c'),
-                    'maxDownloads' => $transfer->getMaxDownloads(),
-                ],
-            ]);
-        } catch (\Throwable $e) {
-            return $this->json(['error' => 'Upload failed: ' . $e->getMessage()], 500);
-        }
+        return $this->json([
+            'error' => 'Legacy multipart upload has been removed. Use the resumable /upload/resumable endpoint (tus protocol).',
+        ], 410);
     }
 
     #[Route('/text', name: 'app_upload_text', methods: ['POST'])]

@@ -134,33 +134,37 @@ class DownloadService
         $zipName = 'transfer_' . substr($transfer->getTokenHash(), 0, 8) . '.zip';
         $zip = new ZipStream(
             operationMode: OperationMode::NORMAL,
-            outputPathName: 'php://output',
+            outputStream: fopen('php://output', 'wb'),
             defaultCompressionMethod: CompressionMethod::STORE,
             outputName: $zipName,
         );
 
         foreach ($transfer->getFiles() as $file) {
-            if ($file->getTransfer()->isFromLibrary()) {
-                $this->libraryStorage->streamAsZip(
-                    $file->getStoredFilename(),
-                    fopen('php://temp', 'w+b'),
-                    $zipName,
-                );
-                continue;
-            }
+            $this->addFileToZip($zip, $file);
+        }
 
-            $stream = $this->storage->readStream($file->getStoredFilename());
+        $zip->finish();
+    }
+
+    private function addFileToZip(ZipStream $zip, TransferFile $file): void
+    {
+        if ($file->getTransfer()->isFromLibrary()) {
+            $this->libraryStorage->addDirectoryToZip($zip, $file->getStoredFilename());
+            return;
+        }
+
+        $stream = $this->storage->readStream($file->getStoredFilename());
+        try {
             $zip->addFileFromStream(
                 fileName: $file->getOriginalFilename(),
                 stream: $stream,
                 compressionMethod: CompressionMethod::STORE,
                 exactSize: $file->getSizeBytes(),
             );
+        } finally {
             if (is_resource($stream)) {
                 fclose($stream);
             }
         }
-
-        $zip->finish();
     }
 }

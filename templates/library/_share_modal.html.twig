@@ -1,0 +1,137 @@
+<div id="share-modal" x-data x-cloak x-show="$store.shareModal.open"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
+     @keydown.escape.window="$store.shareModal.open = false">
+    <div class="glass p-7 w-full max-w-md" @click.stop>
+        <div class="flex items-center justify-between mb-5">
+            <h2 class="text-base font-medium text-white/85">Create Share Link</h2>
+            <button @click="$store.shareModal.open = false" class="text-white/30 hover:text-white/60 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <p class="text-white/40 text-xs mb-4" x-text="$store.shareModal.contextLabel"></p>
+
+        <form id="share-form" class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Max Downloads</label>
+                    <input type="number" name="max_downloads" value="1" min="1" max="100" class="form-input w-full">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Expires (days)</label>
+                    <input type="number" name="expiry_days" value="7" min="1" max="30" class="form-input w-full">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Password (optional)</label>
+                <input type="password" name="password" class="form-input w-full" placeholder="Leave empty for no password">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Recipient Email (optional)</label>
+                <input type="email" name="recipient_email" class="form-input w-full" placeholder="email@example.com">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Message (optional)</label>
+                <textarea name="message" class="form-input w-full" rows="2" placeholder="Add a message..."></textarea>
+            </div>
+            <button type="submit" id="share-submit-btn" class="aero-btn-primary w-full py-2.5 text-sm flex items-center justify-center gap-2">
+                <svg id="share-submit-spinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+                <span id="share-submit-text">Create Share Link</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<div id="share-result" class="hidden glass p-7 text-center" style="max-width: 36rem; margin: 1.5rem auto;">
+    <div class="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-3 border border-success/20">
+        <svg class="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <h2 class="text-lg font-light text-white/90 mb-1">Link Created</h2>
+    <p class="text-white/35 text-sm mb-4" id="share-result-details"></p>
+    <div class="glass-light p-3 mb-4">
+        <a id="share-result-url" href="#" class="text-aero hover:text-aero-glow break-all text-sm" target="_blank"></a>
+    </div>
+    <div class="flex gap-2 justify-center">
+        <button id="copy-share-link" class="aero-btn-primary px-6 py-2.5 text-sm">Copy Link</button>
+        <button onclick="location.reload()" class="aero-btn px-6 py-2.5 text-sm">Done</button>
+    </div>
+</div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.store('shareModal', { open: false, contextLabel: 'Share' });
+});
+
+document.addEventListener('open-share-modal', () => {
+    const ctx = window._libraryContext;
+    const paths = window._sharingPaths;
+    let label = 'Share';
+    if (paths && paths.length > 1) {
+        label = 'Share ' + paths.length + ' items as ZIP';
+    } else if (paths && paths.length === 1) {
+        const name = paths[0].split('/').pop();
+        label = 'Share "' + name + '"';
+    } else if (ctx) {
+        const name = ctx.currentPath === '/' ? 'this folder' : ctx.currentPath.split('/').pop();
+        label = 'Share "' + name + '" as ZIP';
+    }
+    Alpine.store('shareModal').contextLabel = label;
+    Alpine.store('shareModal').open = true;
+});
+
+document.getElementById('share-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const ctx = window._libraryContext;
+    const paths = window._sharingPaths;
+    if (!ctx) return;
+
+    const form = e.target;
+    const submitBtn = document.getElementById('share-submit-btn');
+    const spinner = document.getElementById('share-submit-spinner');
+    const btnText = document.getElementById('share-submit-text');
+    submitBtn.disabled = true;
+    submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+    spinner.classList.remove('hidden');
+    btnText.textContent = 'Creating link\u2026';
+
+    const formData = new FormData(form);
+    formData.append('sourceId', ctx.sourceId);
+    if (paths && paths.length > 0) {
+        paths.forEach(p => formData.append('relativePaths[]', p));
+    } else {
+        formData.append('relativePath', ctx.currentPath);
+    }
+
+    try {
+        const res = await fetch('/library/share', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success) {
+            Alpine.store('shareModal').open = false;
+            const result = document.getElementById('share-result');
+            result.classList.remove('hidden');
+            document.getElementById('share-result-url').href = data.transfer.downloadUrl;
+            document.getElementById('share-result-url').textContent = data.transfer.downloadUrl;
+            const size = data.transfer.size || '';
+            document.getElementById('share-result-details').textContent = data.transfer.filename + ' - ' + size;
+            const copyBtn = document.getElementById('copy-share-link');
+            copyBtn.onclick = () => {
+                navigator.clipboard.writeText(data.transfer.downloadUrl);
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => copyBtn.textContent = 'Copy Link', 2000);
+            };
+            result.scrollIntoView({ behavior: 'smooth' });
+        } else {
+            alert('Failed: ' + (data.error || 'Unknown error'));
+        }
+    } catch (err) {
+        alert('Failed: ' + err.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+        spinner.classList.add('hidden');
+        btnText.textContent = 'Create Share Link';
+    }
+});
+</script>

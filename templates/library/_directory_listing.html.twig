@@ -1,0 +1,96 @@
+<div class="animate-in" style="animation-delay: 0.05s">
+    <form id="bulk-form" data-source-id="{{ state.source.id }}">
+        {% if state.children|length > 0 %}
+            <div class="flex items-center justify-between mb-2 px-1">
+                <label class="flex items-center gap-2 text-xs text-white/40 cursor-pointer select-none">
+                    <input id="select-all" type="checkbox" class="form-checkbox rounded border-white/20 bg-white/5">
+                    Select all
+                </label>
+                <span class="text-white/25 text-[11px] uppercase tracking-wider">{{ state.children|length }} shown</span>
+            </div>
+            <div class="space-y-1.5">
+                {% for child in state.children %}
+                    <div class="glass-panel flex items-center gap-3 px-3 sm:px-4 py-2.5 hover:bg-white/[0.02] transition group"
+                         {% if child.isDirectory %}data-folder-row="{{ state.current.relative == '/' ? '/' ~ child.name : state.current.relative ~ '/' ~ child.name }}"{% endif %}>
+                        <input type="checkbox" data-row-checkbox="{{ state.current.relative == '/' ? '/' ~ child.name : state.current.relative ~ '/' ~ child.name }}"
+                               data-is-directory="{{ child.isDirectory ? '1' : '0' }}"
+                               class="form-checkbox rounded border-white/20 bg-white/5 flex-shrink-0">
+
+                        <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0
+                                    {% if child.isDirectory %}bg-warn/10 border border-warn/20{% else %}bg-aero/10 border border-aero/20{% endif %}">
+                            {% if child.isDirectory %}
+                                <svg class="w-4.5 h-4.5 text-warn/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+                            {% else %}
+                                <svg class="w-4.5 h-4.5 text-aero/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            {% endif %}
+                        </div>
+
+                        <div class="flex-1 min-w-0">
+                            {% if child.isDirectory %}
+                                <a href="{{ path('app_library_source_browse', {id: state.source.id, path: state.current.relative == '/' ? '/' ~ child.name : state.current.relative ~ '/' ~ child.name}) }}"
+                                   class="text-white/80 text-sm font-medium truncate block hover:text-aero transition">
+                                    {{ child.name }}
+                                </a>
+                                <p class="text-white/30 text-[11px]">
+                                    Folder &middot; {{ child.sizeBytes|format_bytes }}
+                                    {% if child.updatedAt %}&middot; updated {{ child.updatedAt|date('M j, H:i') }}{% endif %}
+                                </p>
+                            {% else %}
+                                <p class="text-white/80 text-sm font-medium truncate">{{ child.name }}</p>
+                                <p class="text-white/30 text-[11px]">
+                                    {{ child.mimeType ?: 'file' }} &middot; {{ child.sizeBytes|format_bytes }}
+                                    {% if child.updatedAt %}&middot; {{ child.updatedAt|date('M j, H:i') }}{% endif %}
+                                </p>
+                            {% endif %}
+                        </div>
+
+                        <div class="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition">
+                            {% if child.isDirectory %}
+                                <button type="button"
+                                        onclick="event.stopPropagation(); window._sharingSelection = false; window._sharingPaths = ['{{ state.current.relative == '/' ? '/' ~ child.name : state.current.relative ~ '/' ~ child.name }}']; document.dispatchEvent(new CustomEvent('open-share-modal'));"
+                                        class="aero-btn px-2.5 py-1 text-[11px]"
+                                        title="Share this folder as ZIP">
+                                    ZIP
+                                </button>
+                            {% endif %}
+                            <button type="button"
+                                    onclick="event.stopPropagation(); window._sharingSelection = false; window._sharingPaths = ['{{ state.current.relative == '/' ? '/' ~ child.name : state.current.relative ~ '/' ~ child.name }}']; document.dispatchEvent(new CustomEvent('open-share-modal'));"
+                                    class="aero-btn-primary px-2.5 py-1 text-[11px]"
+                                    title="Share this file">
+                                Share
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="glass p-10 text-center">
+                <p class="text-white/30 text-sm">This folder is empty.</p>
+            </div>
+        {% endif %}
+
+        {% if state.current.is_directory and state.current.pagination is defined and state.current.pagination.total is defined and state.current.pagination.total > state.per_page %}
+            <div class="flex items-center justify-center gap-1 mt-4 text-xs">
+                {% set totalPages = (state.current.pagination.total / state.per_page)|round(0, 'ceil') %}
+                {% if state.page > 1 %}
+                    <a href="{{ path('app_library_source_browse', {id: state.source.id, path: state.current.relative, page: state.page - 1, hidden: showHidden ? 1 : null}) }}" class="aero-btn px-3 py-1.5">Prev</a>
+                {% endif %}
+                <span class="text-white/40 px-3">Page {{ state.page }} of {{ totalPages }}</span>
+                {% if state.page < totalPages %}
+                    <a href="{{ path('app_library_source_browse', {id: state.source.id, path: state.current.relative, page: state.page + 1, hidden: showHidden ? 1 : null}) }}" class="aero-btn px-3 py-1.5">Next</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </form>
+</div>
+
+<div id="bulk-toolbar" class="fixed bottom-4 left-1/2 -translate-x-1/2 translate-y-full opacity-0 pointer-events-none transition-all duration-200 z-40">
+    <div class="glass px-4 py-3 flex items-center gap-4 rounded-2xl shadow-2xl">
+        <span class="text-white/70 text-sm"><span id="bulk-count">0</span> selected</span>
+        <button id="bulk-share" class="aero-btn-primary px-4 py-1.5 text-xs flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m9.032 4.026a3 3 0 10-5.464-2.732 3 3 0 005.464 2.732z"/></svg>
+            Share selection as ZIP
+        </button>
+        <button id="bulk-clear" class="text-white/40 hover:text-white/80 text-xs transition">Clear</button>
+    </div>
+</div>

@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Message\CleanupExpiredTransfers;
+use App\Message\CleanupExpiredUploads;
 use Symfony\Component\Scheduler\Attribute\AsSchedule;
 use Symfony\Component\Scheduler\RecurringMessage;
 use Symfony\Component\Scheduler\Schedule as SymfonySchedule;
@@ -24,6 +25,9 @@ class Schedule implements ScheduleProviderInterface
             ->processOnlyLastMissedRun(true)
             ->add(
                 RecurringMessage::every('1 minute', new CleanupExpiredTransfers())
+            )
+            ->add(
+                RecurringMessage::every('15 minutes', new CleanupExpiredUploads())
             );
     }
 }

@@ -4,6 +4,7 @@ parameters:
     app.default_expiry_days: '%env(int:DEFAULT_EXPIRY_DAYS)%'
     app.default_max_downloads: '%env(int:DEFAULT_MAX_DOWNLOADS)%'
     app.library_path: '%env(default::LIBRARY_PATH)%'
+    app.library_scan_depth: '%env(int:default::LIBRARY_SCAN_DEPTH)%'
 
 services:
     _defaults:
@@ -38,3 +39,9 @@ services:
         arguments:
             $defaultExpiryDays: '%app.default_expiry_days%'
             $defaultMaxDownloads: '%app.default_max_downloads%'
+            $scanDepth: '%app.library_scan_depth%'
+            $maxUploadSize: '%app.max_upload_size%'
+
+    App\Service\UploadSessionService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'

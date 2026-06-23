@@ -1,0 +1,50 @@
+<div class="glass-panel p-5 animate-in">
+    <div class="flex items-start gap-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-aero/10 border border-aero/20">
+            <svg class="w-6 h-6 text-aero/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+            <h2 class="text-base font-medium text-white/85 truncate">{{ state.current.item.name }}</h2>
+            <p class="text-white/40 text-xs mt-1">{{ state.current.item.mimeType ?: 'application/octet-stream' }}</p>
+            <p class="text-white/30 text-xs mt-0.5 font-mono truncate">{{ state.current.item.path }}</p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                <div>
+                    <p class="text-white/25 text-[10px] uppercase tracking-wider">Size</p>
+                    <p class="text-white/70 text-sm">{{ state.current.item.sizeBytes|format_bytes }}</p>
+                </div>
+                <div>
+                    <p class="text-white/25 text-[10px] uppercase tracking-wider">Type</p>
+                    <p class="text-white/70 text-sm truncate">{{ state.current.item.mimeType ?: 'binary' }}</p>
+                </div>
+                <div>
+                    <p class="text-white/25 text-[10px] uppercase tracking-wider">Updated</p>
+                    <p class="text-white/70 text-sm">{{ state.current.item.updatedAt|date('M j, H:i') }}</p>
+                </div>
+                <div>
+                    <p class="text-white/25 text-[10px] uppercase tracking-wider">Source</p>
+                    <p class="text-white/70 text-sm truncate">{{ state.source.name }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if state.saved_token %}
+        <div class="mt-5 pt-5 border-t border-white/5 flex flex-col sm:flex-row sm:items-center gap-3">
+            <div class="flex-1 min-w-0">
+                <p class="text-white/25 text-[10px] uppercase tracking-wider">Most recent share link</p>
+                <p class="text-aero text-xs font-mono truncate mt-0.5">/d/{{ state.saved_token.rawToken }}</p>
+            </div>
+            <button onclick="copyRawToken('{{ state.saved_token.rawToken }}', this)" class="aero-btn px-3 py-1.5 text-xs">Copy link</button>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+window.copyRawToken = function(token, btn) {
+    const url = window.location.origin + '/d/' + token;
+    navigator.clipboard.writeText(url);
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+};
+</script>

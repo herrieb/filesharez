@@ -43,4 +43,18 @@ class LibraryItemRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function countActiveTransfersForItem(string $itemId): int
+    {
+        return (int) $this->getEntityManager()->createQueryBuilder()
+            ->select('COUNT(t.id)')
+            ->from(\App\Entity\Transfer::class, 't')
+            ->andWhere('t.libraryItem = :id')
+            ->andWhere('t.expiresAt > :now')
+            ->andWhere('t.isRevoked = false')
+            ->setParameter('id', $itemId)
+            ->setParameter('now', new \DateTimeImmutable())
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

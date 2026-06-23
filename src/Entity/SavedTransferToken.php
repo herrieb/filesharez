@@ -28,6 +28,9 @@ class SavedTransferToken
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $label = null;
 
+    #[ORM\Column(type: 'string', length: 1024, nullable: true)]
+    private ?string $relativePath = null;
+
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $createdAt;
 
@@ -50,6 +53,9 @@ class SavedTransferToken
 
     public function getLabel(): ?string { return $this->label; }
     public function setLabel(?string $label): static { $this->label = $label; return $this; }
+
+    public function getRelativePath(): ?string { return $this->relativePath; }
+    public function setRelativePath(?string $relativePath): static { $this->relativePath = $relativePath; return $this; }
 
     public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
 }

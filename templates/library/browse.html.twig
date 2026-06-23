@@ -1,0 +1,152 @@
+{% extends 'app_layout.html.twig' %}
+
+{% block title %}{{ state.source.name }} - Library - FileShareZ{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-5" x-data="{ showShare: false }">
+    <div class="flex items-center gap-2 animate-in text-xs">
+        <a href="{{ path('app_library') }}" class="text-white/30 hover:text-white/60 transition flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            Library
+        </a>
+        {% for crumb in state.breadcrumb %}
+            <span class="text-white/15">/</span>
+            {% if loop.last %}
+                <span class="text-white/70 truncate">{{ crumb.name }}</span>
+            {% else %}
+                <a href="{{ path('app_library_source_browse', {id: state.source.id, path: crumb.relative}) }}" class="text-white/30 hover:text-white/60 transition truncate">{{ crumb.name }}</a>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <div class="glass flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 animate-in p-4 sm:p-5">
+        <div class="min-w-0">
+            <h1 class="text-base sm:text-lg font-light tracking-wide text-white/90 truncate">
+                {{ state.current.is_directory ? state.current.name : state.current.item.name }}
+                {% if not state.current.is_directory %}<span class="text-white/30 text-xs font-mono ml-2">{{ state.current.item.sizeBytes|format_bytes }}</span>{% endif %}
+            </h1>
+            <p class="text-white/30 text-[11px] font-mono truncate mt-0.5">
+                {% if state.current.is_directory %}
+                    {{ state.current.absolute }}
+                    {% if state.current.pagination is defined and state.current.pagination.total is defined %}
+                        &middot; {{ state.current.pagination.total }} entr{{ state.current.pagination.total == 1 ? 'y' : 'ies' }}
+                    {% endif %}
+                {% else %}
+                    {{ state.current.item.mimeType ?: 'application/octet-stream' }}
+                {% endif %}
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            {% if state.current.is_directory and state.parent_relative is not null %}
+                <a href="{{ path('app_library_source_browse', {id: state.source.id, path: state.parent_relative}) }}" class="aero-btn px-3 py-1.5 text-xs flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                    Up
+                </a>
+            {% endif %}
+            {% if showHidden %}
+                <a href="{{ path('app_library_source_browse', {id: state.source.id, path: state.current.relative}) }}" class="aero-btn px-3 py-1.5 text-xs flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.05 6.05m3.828 3.828L6.05 6.05M6.05 6.05L3 3m3.05 3.05l11.9 11.9M15 12a3 3 0 00-3-3"/></svg>
+                    Hide hidden
+                </a>
+            {% else %}
+                <a href="{{ path('app_library_source_browse', {id: state.source.id, path: state.current.relative, hidden: 1}) }}" class="aero-btn px-3 py-1.5 text-xs flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    Show hidden
+                </a>
+            {% endif %}
+            {% if state.current.is_directory %}
+                <button onclick="rescanFolder('{{ state.source.id }}', '{{ state.current.relative }}', this)" class="aero-btn px-3 py-1.5 text-xs flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Rescan
+                </button>
+            {% endif %}
+            <button @click="showShare = true; window._sharingSelection = true" class="aero-btn-primary px-3 py-1.5 text-xs flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m9.032 4.026a3 3 0 10-5.464-2.732 3 3 0 005.464 2.732zm-9.032-4.026a3 3 0 105.464-2.684 3 3 0 00-5.464 2.684z"/></svg>
+                Share current
+            </button>
+        </div>
+    </div>
+
+    {% if state.current.is_directory %}
+        {% include 'library/_directory_listing.html.twig' with {state: state} %}
+    {% else %}
+        {% include 'library/_file_detail.html.twig' with {state: state} %}
+    {% endif %}
+
+    {% include 'library/_share_modal.html.twig' with {source: state.source} %}
+</div>
+
+<style>[x-cloak]{display:none!important;}</style>
+
+<script>
+(function() {
+    const sourceId = '{{ state.source.id }}';
+    const currentPath = {{ state.current.relative|json_encode|raw }};
+    const showHidden = {{ showHidden ? 'true' : 'false' }};
+
+    window._libraryContext = { sourceId, currentPath, showHidden };
+
+    document.querySelectorAll('[data-folder-row]').forEach(row => {
+        row.addEventListener('click', (e) => {
+            if (e.target.closest('input,button,a')) return;
+            const path = row.getAttribute('data-folder-row');
+            window.location.href = '/library/sources/' + sourceId + '/browse?path=' + encodeURIComponent(path) + (showHidden ? '&hidden=1' : '');
+        });
+        row.classList.add('cursor-pointer');
+    });
+
+    const selectAll = document.getElementById('select-all');
+    if (selectAll) {
+        selectAll.addEventListener('change', () => {
+            document.querySelectorAll('[data-row-checkbox]').forEach(cb => { cb.checked = selectAll.checked; });
+            updateBulkToolbar();
+        });
+    }
+
+    document.querySelectorAll('[data-row-checkbox]').forEach(cb => {
+        cb.addEventListener('change', updateBulkToolbar);
+    });
+
+    function updateBulkToolbar() {
+        const checked = document.querySelectorAll('[data-row-checkbox]:checked');
+        const toolbar = document.getElementById('bulk-toolbar');
+        const count = document.getElementById('bulk-count');
+        if (!toolbar || !count) return;
+        if (checked.length > 0) {
+            toolbar.classList.remove('translate-y-full', 'opacity-0', 'pointer-events-none');
+            toolbar.classList.add('translate-y-0', 'opacity-100');
+            count.textContent = checked.length;
+            window._sharingSelection = false;
+            window._sharingPaths = Array.from(checked).map(cb => cb.getAttribute('data-row-checkbox'));
+        } else {
+            toolbar.classList.add('translate-y-full', 'opacity-0', 'pointer-events-none');
+            toolbar.classList.remove('translate-y-0', 'opacity-100');
+        }
+    }
+
+    document.getElementById('bulk-clear')?.addEventListener('click', () => {
+        document.querySelectorAll('[data-row-checkbox]').forEach(cb => { cb.checked = false; });
+        if (selectAll) selectAll.checked = false;
+        updateBulkToolbar();
+    });
+
+    document.getElementById('bulk-share')?.addEventListener('click', () => {
+        window._sharingSelection = false;
+        document.dispatchEvent(new CustomEvent('open-share-modal'));
+    });
+
+    window.rescanFolder = function(srcId, path, btn) {
+        const orig = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '...';
+        const url = '/library/sources/' + srcId + '/rescan';
+        fetch(url, {
+            method: 'POST',
+            body: new URLSearchParams({ depth: '5' })
+        })
+        .then(r => r.ok ? location.reload() : Promise.reject(new Error('fail')))
+        .catch(() => { btn.disabled = false; btn.innerHTML = orig; alert('Rescan failed'); });
+    };
+})();
+</script>
+{% endblock %}

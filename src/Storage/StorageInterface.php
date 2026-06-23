@@ -12,4 +12,5 @@ interface StorageInterface
     public function exists(string $path): bool;
     public function size(string $path): int;
     public function mimeType(string $path): string;
+    public function ingestFromPath(string $sourcePath, string $originalFilename): array;
 }

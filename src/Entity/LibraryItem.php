@@ -24,7 +24,10 @@ class LibraryItem
     #[ORM\Column(type: 'string', length: 512)]
     private string $name;
 
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[ORM\Column(type: 'string', length: 1024, nullable: true)]
+    private ?string $parentPath = null;
+
+    #[ORM\Column(type: 'string', length: 1024, nullable: true)]
     private ?string $relativePath = null;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
@@ -62,6 +65,9 @@ class LibraryItem
 
     public function getRelativePath(): ?string { return $this->relativePath; }
     public function setRelativePath(?string $relativePath): static { $this->relativePath = $relativePath; return $this; }
+
+    public function getParentPath(): ?string { return $this->parentPath; }
+    public function setParentPath(?string $parentPath): static { $this->parentPath = $parentPath; return $this; }
 
     public function getMimeType(): ?string { return $this->mimeType; }
     public function setMimeType(?string $mimeType): static { $this->mimeType = $mimeType; return $this; }

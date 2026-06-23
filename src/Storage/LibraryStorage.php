@@ -112,7 +112,141 @@ class LibraryStorage
      */
     public function scanRoot(string $rootPath): array
     {
+        return $this->scanRecursive($rootPath, 1);
+    }
+
+    /**
+     * Walks $rootPath up to $maxDepth levels deep. Each entry has:
+     *  - path: absolute filesystem path
+     *  - name: basename
+     *  - parent_path: absolute path of the containing directory
+     *  - relative_path: path relative to $rootPath (no leading slash)
+     *  - size_bytes: regular files only; directories get recursive sum of regular files
+     *  - is_directory, mime_type
+     *
+     * Symlinks are skipped by default (safer). Hidden entries (leading dot) are
+     * included by default; pass $includeHidden = false to filter them.
+     */
+    public function scanRecursive(string $rootPath, int $maxDepth = 1, bool $includeHidden = true): array
+    {
         $real = realpath($rootPath);
+        if ($real === false || !is_dir($real)) {
+            return [];
+        }
+
+        $results = [];
+        $this->scanRecursiveInto($real, $real, 0, $maxDepth, $includeHidden, $results);
+        return $results;
+    }
+
+    private function scanRecursiveInto(
+        string $rootReal,
+        string $currentDir,
+        int $depth,
+        int $maxDepth,
+        bool $includeHidden,
+        array &$results,
+    ): void {
+        $iter = new \DirectoryIterator($currentDir);
+        foreach ($iter as $entry) {
+            if ($entry->isDot()) {
+                continue;
+            }
+            if ($entry->isLink()) {
+                continue;
+            }
+            $name = $entry->getFilename();
+            if (!$includeHidden && str_starts_with($name, '.')) {
+                continue;
+            }
+
+            $path = $entry->getPathname();
+            $isDir = $entry->isDir();
+            $size = $isDir ? $this->dirSize($path) : (int) $entry->getSize();
+
+            $relative = ltrim(substr($path, strlen($rootReal)), '/');
+
+            $results[] = [
+                'path' => $path,
+                'name' => $name,
+                'parent_path' => $currentDir,
+                'relative_path' => $relative,
+                'size_bytes' => $size,
+                'is_directory' => $isDir,
+                'mime_type' => $isDir ? null : $this->guessMime($path),
+            ];
+
+            if ($isDir && $depth + 1 < $maxDepth) {
+                $this->scanRecursiveInto($rootReal, $path, $depth + 1, $maxDepth, $includeHidden, $results);
+            }
+        }
+    }
+
+    /**
+     * Resolve a path inside a specific source root. $relativePath must start
+     * with '/'. Resolves symlinks via realpath() and asserts the result is
+     * still inside the source's real root. Throws on any escape attempt.
+     */
+    public function resolveUnderSource(string $sourceRoot, string $relativePath): string
+    {
+        $rootReal = realpath($sourceRoot);
+        if ($rootReal === false) {
+            throw new \RuntimeException('Source root does not exist: ' . $sourceRoot);
+        }
+
+        $relative = ltrim($relativePath, '/');
+        if ($relative === '' || $relative === '.') {
+            return $rootReal;
+        }
+
+        if (str_contains($relative, "\0")) {
+            throw new \RuntimeException('Invalid path');
+        }
+
+        $candidate = $rootReal . '/' . $relative;
+        $real = realpath($candidate);
+        if ($real === false) {
+            throw new \RuntimeException('Path does not exist: ' . $relativePath);
+        }
+
+        if ($real !== $rootReal && !str_starts_with($real, $rootReal . '/')) {
+            throw new \RuntimeException('Path escapes source root: ' . $relativePath);
+        }
+
+        return $real;
+    }
+
+    /**
+     * Assert that $absolutePath resolves inside $sourceRoot. Used to gate
+     * browse/share operations so callers can't pass arbitrary paths.
+     */
+    public function assertInsideSource(string $sourceRoot, string $absolutePath): void
+    {
+        $rootReal = realpath($sourceRoot);
+        $real = realpath($absolutePath);
+        if ($rootReal === false || $real === false) {
+            throw new \RuntimeException('Path does not exist');
+        }
+        if ($real !== $rootReal && !str_starts_with($real, $rootReal . '/')) {
+            throw new \RuntimeException('Path escapes source root');
+        }
+    }
+
+    /**
+     * List direct children of $absolutePath (which must be inside an allowed
+     * root, and inside $sourceRoot if provided). Returns the same shape as
+     * scanRecursive() but only one level deep. Skips symlinks.
+     */
+    public function listDirectory(string $absolutePath, ?string $sourceRoot = null): array
+    {
+        if (!$this->isPathAllowed($absolutePath)) {
+            throw new \RuntimeException('Library path is not inside an allowed root: ' . $absolutePath);
+        }
+        if ($sourceRoot !== null) {
+            $this->assertInsideSource($sourceRoot, $absolutePath);
+        }
+
+        $real = realpath($absolutePath);
         if ($real === false || !is_dir($real)) {
             return [];
         }
@@ -120,18 +254,19 @@ class LibraryStorage
         $results = [];
         $iter = new \DirectoryIterator($real);
         foreach ($iter as $entry) {
-            if ($entry->isDot()) {
+            if ($entry->isDot() || $entry->isLink()) {
                 continue;
             }
             $path = $entry->getPathname();
             $isDir = $entry->isDir();
-            $size = $isDir ? $this->dirSize($path) : (int) $entry->getSize();
-
             $results[] = [
                 'path' => $path,
                 'name' => $entry->getFilename(),
-                'relative_path' => null,
-                'size_bytes' => $size,
+                'parent_path' => $real,
+                'relative_path' => $sourceRoot
+                    ? ltrim(substr($path, strlen(realpath($sourceRoot))), '/')
+                    : ltrim(substr($path, strlen($real)), '/'),
+                'size_bytes' => $isDir ? $this->dirSize($path) : (int) $entry->getSize(),
                 'is_directory' => $isDir,
                 'mime_type' => $isDir ? null : $this->guessMime($path),
             ];
@@ -139,6 +274,43 @@ class LibraryStorage
 
         usort($results, fn($a, $b) => ($b['is_directory'] <=> $a['is_directory']) ?: strcasecmp($a['name'], $b['name']));
         return $results;
+    }
+
+    /**
+     * Add a directory (or single file) to an already-open ZipStream. Paths
+     * inside the ZIP mirror the directory structure relative to the
+     * directory's basename. Used for bulk-share downloads where several
+     * selections get packaged into one archive.
+     */
+    public function addDirectoryToZip(ZipStream $zip, string $absolutePath, string $prefixInZip = ''): void
+    {
+        if (!$this->isPathAllowed($absolutePath)) {
+            throw new \RuntimeException('Library path is not inside an allowed root: ' . $absolutePath);
+        }
+        $real = realpath($absolutePath);
+        $baseName = basename($real);
+
+        if (!is_dir($real)) {
+            $entryName = trim($prefixInZip . '/' . $baseName, '/');
+            $this->addFileToZip($zip, $real, $entryName);
+            return;
+        }
+
+        $zipBase = trim($prefixInZip . '/' . $baseName, '/');
+
+        $iter = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($real, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::LEAVES_ONLY
+        );
+        foreach ($iter as $f) {
+            /** @var \SplFileInfo $f */
+            if ($f->isLink() || !$f->isFile()) {
+                continue;
+            }
+            $relative = ltrim(substr($f->getPathname(), strlen($real)), '/');
+            $entryName = trim($zipBase . '/' . $relative, '/');
+            $this->addFileToZip($zip, $f->getPathname(), $entryName);
+        }
     }
 
     private function dirSize(string $path): int

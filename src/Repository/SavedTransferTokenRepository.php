@@ -20,6 +20,22 @@ class SavedTransferTokenRepository extends ServiceEntityRepository
         return $this->findOneBy(['user' => $user->getId(), 'transfer' => $transfer->getId()]);
     }
 
+    public function findOneByUserAndRelativePath(?User $user, ?\App\Entity\LibrarySource $source, string $relativePath): ?SavedTransferToken
+    {
+        $qb = $this->createQueryBuilder('s')
+            ->leftJoin('s.transfer', 't')
+            ->andWhere('s.relativePath = :rel')
+            ->setParameter('rel', $relativePath)
+            ->setMaxResults(1)
+            ->orderBy('s.createdAt', 'DESC');
+
+        if ($user !== null) {
+            $qb->andWhere('s.user = :userId')->setParameter('userId', $user->getId());
+        }
+
+        return $qb->getQuery()->getOneOrNullResult();
+    }
+
     /**
      * @return array<string,string> transferId => rawToken
      */

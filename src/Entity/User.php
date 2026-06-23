@@ -33,6 +33,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'bigint', options: ['default' => 10737418240])]
     private int $quotaBytes = 10737418240;
 
+    #[ORM\Column(type: 'bigint', options: ['default' => 0])]
+    private int $reservedBytes = 0;
+
     #[ORM\Column(type: 'boolean', options: ['default' => true])]
     private bool $isActive = true;
 
@@ -129,6 +132,29 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getReservedBytes(): int
+    {
+        return $this->reservedBytes;
+    }
+
+    public function setReservedBytes(int $reservedBytes): static
+    {
+        $this->reservedBytes = max(0, $reservedBytes);
+        return $this;
+    }
+
+    public function reserveBytes(int $bytes): static
+    {
+        $this->reservedBytes = max(0, $this->reservedBytes + $bytes);
+        return $this;
+    }
+
+    public function releaseBytes(int $bytes): static
+    {
+        $this->reservedBytes = max(0, $this->reservedBytes - $bytes);
+        return $this;
+    }
+
     public function isActive(): bool
     {
         return $this->isActive;
@@ -182,6 +208,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getQuotaRemaining(): int
     {
-        return max(0, $this->quotaBytes - $this->getUsedStorage());
+        return max(0, $this->quotaBytes - $this->getUsedStorage() - $this->reservedBytes);
     }
 }

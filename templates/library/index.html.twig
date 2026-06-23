@@ -3,7 +3,7 @@
 {% block title %}Library - FileShareZ{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto space-y-6 sm:space-y-7" x-data="{ showAdd: false, shareItem: null }">
+<div class="max-w-6xl mx-auto space-y-6 sm:space-y-7" x-data="{ showAdd: false }">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 animate-in">
         <div>
             <h1 class="text-xl sm:text-2xl font-light tracking-wide text-white/90">Library</h1>
@@ -17,7 +17,7 @@
 
     <div id="add-source-panel" x-show="showAdd" x-transition class="glass p-6 space-y-4">
         <h2 class="text-sm font-medium text-white/50 uppercase tracking-wider">Register a folder</h2>
-        <p class="text-white/30 text-xs">Enter the absolute server path of a folder you want to make shareable. Folders are scanned one level deep; subdirectories become a single shareable ZIP.</p>
+        <p class="text-white/30 text-xs">Enter the absolute server path of a folder you want to make shareable. The folder is scanned deeply (5 levels) so you can browse and share anything inside it.</p>
         <form id="add-source-form" class="space-y-3">
             <div>
                 <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Display name</label>
@@ -53,6 +53,7 @@
                                 <span class="text-white/20 hidden sm:inline">scanned {{ source.lastScannedAt|date('M j, H:i') }}</span>
                             {% endif %}
                             <button onclick="rescanSource('{{ source.id }}', this)" class="aero-btn px-3 py-1.5 text-xs">Rescan</button>
+                            <a href="{{ path('app_library_source_browse', {id: source.id}) }}" class="aero-btn-primary px-3 py-1.5 text-xs">Browse</a>
                             <button onclick="deleteSource('{{ source.id }}', this)" class="text-white/30 hover:text-danger text-xs transition">Remove</button>
                         </div>
                     </div>
@@ -60,9 +61,9 @@
             {% endfor %}
         </div>
 
-        <div class="animate-in" style="animation-delay: 0.2s">
-            <h2 class="text-sm font-medium text-white/50 uppercase tracking-wider mb-4 px-1">Items</h2>
-            {% if items|length > 0 %}
+        {% if items|length > 0 %}
+            <div class="animate-in" style="animation-delay: 0.2s">
+                <h2 class="text-sm font-medium text-white/50 uppercase tracking-wider mb-4 px-1">Top-level items</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {% for item in items %}
                         {% set has_token = itemTokens[item.entity.id] is defined %}
@@ -78,28 +79,22 @@
                                 <p class="text-white/80 font-medium text-sm truncate">{{ item.entity.name }}</p>
                                 <p class="text-white/30 text-xs">
                                     {{ item.entity.formattedSize }}
-                                    {% if item.entity.isDirectory %}<span class="text-warn/60"> &middot; folder (sent as ZIP)</span>{% endif %}
+                                    {% if item.entity.isDirectory %}<span class="text-warn/60"> &middot; folder</span>{% endif %}
                                 </p>
                             </div>
                             <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                                {% if has_token %}
-                                    <button onclick="copyLibraryLink('{{ item.entity.id }}', this)" class="text-white/30 hover:text-aero p-2 transition" title="Copy latest share link">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 0H10m0 0V9m0 4h2m4-4v3"/></svg>
-                                    </button>
+                                {% if item.entity.isDirectory %}
+                                    <a href="{{ path('app_library_source_browse', {id: item.source.id, path: '/' ~ item.entity.name}) }}" class="aero-btn px-3 py-2 text-xs">Open</a>
+                                {% else %}
+                                    <a href="{{ path('app_library_source_browse', {id: item.source.id, path: '/' ~ item.entity.relativePath|default(item.entity.name)}) }}" class="aero-btn px-3 py-2 text-xs">Open</a>
                                 {% endif %}
-                                <button @click="shareItem = '{{ item.entity.id }}'; window._sharingItemId = '{{ item.entity.id }}'" class="aero-btn-primary px-3 sm:px-4 py-2 text-xs flex-shrink-0">
-                                    {% if has_token %}New Link{% else %}Share{% endif %}
-                                </button>
+                                <button onclick="quickShare('{{ item.entity.id }}', this)" class="aero-btn-primary px-3 sm:px-4 py-2 text-xs flex-shrink-0">Share</button>
                             </div>
                         </div>
                     {% endfor %}
                 </div>
-            {% else %}
-                <div class="glass p-10 text-center">
-                    <p class="text-white/30 text-sm">No items yet. Click "Rescan" on a source.</p>
-                </div>
-            {% endif %}
-        </div>
+            </div>
+        {% endif %}
     {% else %}
         <div class="glass p-16 text-center animate-in">
             <svg class="w-16 h-16 text-white/8 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
@@ -109,79 +104,18 @@
         </div>
     {% endif %}
 
-    <div id="share-modal" x-show="shareItem" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70" @click.self="shareItem = null">
-        <div class="glass p-7 w-full max-w-md animate-in">
-            <div class="flex items-center justify-between mb-5">
-                <h2 class="text-base font-medium text-white/85">Create Share Link</h2>
-                <button @click="shareItem = null" class="text-white/30 hover:text-white/60 transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-            <form id="share-form" class="space-y-4">
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Max Downloads</label>
-                        <input type="number" name="max_downloads" value="1" min="1" max="100" class="form-input w-full">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Expires (days)</label>
-                        <input type="number" name="expiry_days" value="7" min="1" max="30" class="form-input w-full">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Password (optional)</label>
-                    <input type="password" name="password" class="form-input w-full" placeholder="Leave empty for no password">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Recipient Email (optional)</label>
-                    <input type="email" name="recipient_email" class="form-input w-full" placeholder="email@example.com">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Message (optional)</label>
-                    <textarea name="message" class="form-input w-full" rows="2" placeholder="Add a message..."></textarea>
-                </div>
-                <button type="submit" class="aero-btn-primary w-full py-2.5 text-sm">Create Share Link</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="share-result" class="hidden glass p-7 text-center animate-in" style="max-width: 36rem; margin: 0 auto;">
-        <div class="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-3 border border-success/20">
-            <svg class="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-        </div>
-        <h2 class="text-lg font-light text-white/90 mb-1">Link Created</h2>
-        <p class="text-white/35 text-sm mb-4" id="share-result-details"></p>
-        <div class="glass-light p-3 mb-4">
-            <a id="share-result-url" href="#" class="text-aero hover:text-aero-glow break-all text-sm" target="_blank"></a>
-        </div>
-        <div class="flex gap-2 justify-center">
-            <button id="copy-share-link" class="aero-btn-primary px-6 py-2.5 text-sm">Copy Link</button>
-            <button onclick="location.reload()" class="aero-btn px-6 py-2.5 text-sm">Done</button>
-        </div>
-    </div>
+    {% include 'library/_share_modal.html.twig' %}
 </div>
 
 <style>[x-cloak]{display:none!important;}</style>
 
 <script>
-const libraryItemTokens = {{ (itemTokens|default({}))|json_encode|raw }};
-
-function copyLibraryLink(itemId, btn) {
-    const token = libraryItemTokens[itemId];
-    if (!token) { alert('No share link yet — click "New Link" first.'); return; }
-    const url = window.location.origin + '/d/' + token;
-    navigator.clipboard.writeText(url);
-    const original = btn.innerHTML;
-    btn.innerHTML = '<svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
-    setTimeout(() => { btn.innerHTML = original; }, 2000);
-}
-
 async function rescanSource(id, btn) {
     const orig = btn.textContent;
     btn.disabled = true;
     btn.textContent = '...';
     try {
-        const res = await fetch('/library/sources/' + id + '/rescan', { method: 'POST' });
+        const res = await fetch('/library/sources/' + id + '/rescan', { method: 'POST', body: new URLSearchParams({depth: '5'}) });
         if (res.ok) location.reload();
         else { alert('Rescan failed'); btn.disabled = false; btn.textContent = orig; }
     } catch(e) { alert('Network error'); btn.disabled = false; btn.textContent = orig; }
@@ -196,6 +130,33 @@ async function deleteSource(id, btn) {
     } catch(e) { alert('Network error'); }
 }
 
+async function quickShare(itemId, btn) {
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '...';
+    try {
+        const res = await fetch('/library/items/' + itemId + '/share', {
+            method: 'POST',
+            body: new URLSearchParams({ max_downloads: '1', expiry_days: '7' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            const url = data.transfer.downloadUrl;
+            navigator.clipboard.writeText(url).catch(() => {});
+            btn.textContent = 'Copied!';
+            setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2500);
+        } else {
+            alert('Failed: ' + (data.error || 'Unknown'));
+            btn.textContent = orig;
+            btn.disabled = false;
+        }
+    } catch (e) {
+        alert('Network error');
+        btn.textContent = orig;
+        btn.disabled = false;
+    }
+}
+
 document.getElementById('add-source-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData();
@@ -207,50 +168,6 @@ document.getElementById('add-source-form')?.addEventListener('submit', async (e)
         if (data.success) location.reload();
         else alert('Failed: ' + (data.error || 'Unknown error'));
     } catch(err) { alert('Failed: ' + err.message); }
-});
-
-document.getElementById('share-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const itemId = window._sharingItemId;
-    if (!itemId) { alert('No item selected'); return; }
-    const form = e.target;
-    const formData = new FormData(form);
-    try {
-        const res = await fetch('/library/items/' + itemId + '/share', { method: 'POST', body: formData });
-        const data = await res.json();
-        if (data.success) {
-            const modal = document.getElementById('share-modal');
-            modal.style.display = 'none';
-            const result = document.getElementById('share-result');
-            result.classList.remove('hidden');
-            document.getElementById('share-result-url').href = data.transfer.downloadUrl;
-            document.getElementById('share-result-url').textContent = data.transfer.downloadUrl;
-            const size = data.transfer.size || '';
-            const dirNote = data.transfer.isDirectory ? ' (folder - sent as ZIP)' : '';
-            document.getElementById('share-result-details').textContent = data.transfer.filename + ' - ' + size + dirNote;
-            const copyBtn = document.getElementById('copy-share-link');
-            copyBtn.onclick = () => {
-                navigator.clipboard.writeText(data.transfer.downloadUrl);
-                copyBtn.textContent = 'Copied!';
-                setTimeout(() => copyBtn.textContent = 'Copy Link', 2000);
-            };
-            result.scrollIntoView({ behavior: 'smooth' });
-        } else {
-            alert('Failed: ' + (data.error || 'Unknown error'));
-        }
-    } catch(err) { alert('Failed: ' + err.message); }
-});
-
-document.addEventListener('click', (e) => {
-    const shareBtn = e.target.closest('button[x\\:click*="shareItem"]');
-    if (shareBtn) {
-        const m = shareBtn.getAttribute('@click').match(/'([^']+)'/);
-        if (m) {
-            window._sharingItemId = m[1];
-            const modal = document.getElementById('share-modal');
-            modal.setAttribute('data-item-id', m[1]);
-        }
-    }
 });
 </script>
 {% endblock %}

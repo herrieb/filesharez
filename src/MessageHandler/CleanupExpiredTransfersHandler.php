@@ -3,6 +3,7 @@
 namespace App\MessageHandler;
 
 use App\Message\CleanupExpiredTransfers;
+use App\Repository\LibraryItemRepository;
 use App\Repository\TransferRepository;
 use App\Storage\StorageInterface;
 use Doctrine\ORM\EntityManagerInterface;
@@ -14,6 +15,7 @@ class CleanupExpiredTransfersHandler
 {
     public function __construct(
         private TransferRepository $transferRepository,
+        private LibraryItemRepository $libraryItemRepository,
         private EntityManagerInterface $entityManager,
         private StorageInterface $storage,
         private LoggerInterface $logger,
@@ -29,6 +31,8 @@ class CleanupExpiredTransfersHandler
 
         foreach ($transfers as $transfer) {
             try {
+                $libraryItem = $transfer->getLibraryItem();
+
                 foreach ($transfer->getFiles() as $file) {
                     if ($transfer->isFromLibrary()) {
                         continue;
@@ -40,6 +44,12 @@ class CleanupExpiredTransfersHandler
 
                 $this->entityManager->remove($transfer);
                 $count++;
+                $this->entityManager->flush();
+
+                if ($libraryItem !== null && $this->libraryItemRepository->countActiveTransfersForItem($libraryItem->getId()) === 0) {
+                    $this->entityManager->remove($libraryItem);
+                    $this->entityManager->flush();
+                }
             } catch (\Throwable $e) {
                 $this->logger->error('Failed to cleanup transfer: ' . $transfer->getId(), [
                     'error' => $e->getMessage(),

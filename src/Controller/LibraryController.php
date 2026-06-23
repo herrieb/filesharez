@@ -43,39 +43,69 @@ class LibraryController extends AbstractController
         $items = [];
         foreach ($sources as $source) {
             foreach ($source->getItems() as $item) {
-                $items[] = [
-                    'entity' => $item,
-                    'source' => $source,
-                ];
+                if ($item->getParentPath() === realpath($source->getPath())) {
+                    $items[] = [
+                        'entity' => $item,
+                        'source' => $source,
+                    ];
+                }
             }
         }
 
         usort($items, fn($a, $b) => strcasecmp($a['entity']->getName(), $b['entity']->getName()));
 
-        $libraryItemIds = array_map(fn($i) => $i['entity']->getId(), $items);
-        $transfers = $this->transferRepository->createQueryBuilder('t')
-            ->andWhere('t.user = :userId')
-            ->andWhere('t.libraryItem IN (:itemIds)')
-            ->setParameter('userId', $user->getId())
-            ->setParameter('itemIds', $libraryItemIds ?: [''])
-            ->getQuery()
-            ->getResult();
-
-        $transferIds = array_map(fn($t) => $t->getId(), $transfers);
-        $savedTokens = $this->savedTokenRepository->findRawTokensForUser($user, $transferIds);
-
-        $itemTokenMap = [];
-        foreach ($transfers as $t) {
-            $liId = $t->getLibraryItem()?->getId();
-            if ($liId && isset($savedTokens[$t->getId()])) {
-                $itemTokenMap[$liId] = $savedTokens[$t->getId()];
+        $savedTokens = [];
+        foreach ($sources as $source) {
+            foreach ($source->getItems() as $item) {
+                if ($item->getParentPath() !== realpath($source->getPath())) {
+                    continue;
+                }
+                $token = $this->savedTokenRepository->findOneByUserAndRelativePath(
+                    $user,
+                    $source,
+                    '/' . ltrim((string) $item->getRelativePath(), '/')
+                );
+                if ($token) {
+                    $savedTokens[$item->getId()] = $token->getRawToken();
+                }
             }
         }
 
         return $this->render('library/index.html.twig', [
             'sources' => $sources,
             'items' => $items,
-            'itemTokens' => $itemTokenMap,
+            'itemTokens' => $savedTokens,
+        ]);
+    }
+
+    #[Route('/sources/{id}/browse', name: 'app_library_source_browse')]
+    public function browseSource(string $id, Request $request): Response
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $source = $this->sourceRepository->find($id);
+        if (!$source) {
+            throw $this->createNotFoundException('Source not found');
+        }
+        if ($source->getOwner()->getId() !== $user->getId()) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $relativePath = $request->query->get('path', '/');
+        $includeHidden = $request->query->getBoolean('hidden') || $request->query->get('hidden') === '1';
+        $page = max(1, (int) $request->query->get('page', 1));
+
+        try {
+            $state = $this->libraryService->browsePath($source, $relativePath, $user, $includeHidden, $page);
+        } catch (\Throwable $e) {
+            $this->addFlash('error', $e->getMessage());
+            return $this->redirectToRoute('app_library');
+        }
+
+        return $this->render('library/browse.html.twig', [
+            'state' => $state,
+            'showHidden' => $includeHidden,
         ]);
     }
 
@@ -120,7 +150,7 @@ class LibraryController extends AbstractController
     }
 
     #[Route('/sources/{id}/rescan', name: 'app_library_source_rescan', methods: ['POST'])]
-    public function rescan(string $id): JsonResponse
+    public function rescan(string $id, Request $request): JsonResponse
     {
         $source = $this->sourceRepository->find($id);
         if (!$source) {
@@ -130,12 +160,19 @@ class LibraryController extends AbstractController
             return $this->json(['error' => 'Access denied'], 403);
         }
 
-        $count = $this->libraryService->rescanSource($source);
-        return $this->json([
-            'success' => true,
-            'itemCount' => $count,
-            'lastScannedAt' => $source->getLastScannedAt()?->format('c'),
-        ]);
+        $depth = $request->request->get('depth');
+        $depth = $depth !== null && $depth !== '' ? max(1, (int) $depth) : null;
+
+        try {
+            $count = $this->libraryService->rescanSource($source, $depth);
+            return $this->json([
+                'success' => true,
+                'itemCount' => $count,
+                'lastScannedAt' => $source->getLastScannedAt()?->format('c'),
+            ]);
+        } catch (\Throwable $e) {
+            return $this->json(['error' => $e->getMessage()], 500);
+        }
     }
 
     #[Route('/sources/{id}/delete', name: 'app_library_source_delete', methods: ['POST'])]
@@ -153,6 +190,9 @@ class LibraryController extends AbstractController
         return $this->json(['success' => true]);
     }
 
+    /**
+     * Share a single item (legacy item-id-based endpoint).
+     */
     #[Route('/items/{id}/share', name: 'app_library_item_share', methods: ['POST'])]
     public function share(string $id, Request $request): JsonResponse
     {
@@ -193,29 +233,121 @@ class LibraryController extends AbstractController
             $tokenMap[$item->getId()] = $rawToken;
             $session->set('library_tokens', $tokenMap);
 
+            return $this->jsonShareResponse($transfer, $item);
+        } catch (\Throwable $e) {
+            return $this->json(['error' => 'Could not create share: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Share one or more paths inside a source. Accepts either:
+     *  - sourceId + relativePaths[]  (the new bulk path used by the browse view), or
+     *  - sourceId + relativePath     (single path, used when no checkboxes were checked)
+     */
+    #[Route('/share', name: 'app_library_share', methods: ['POST'])]
+    public function shareSelection(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $sourceId = (string) $request->request->get('sourceId', '');
+        if ($sourceId === '') {
+            return $this->json(['error' => 'sourceId required'], 400);
+        }
+        $source = $this->sourceRepository->find($sourceId);
+        if (!$source) {
+            return $this->json(['error' => 'Source not found'], 404);
+        }
+        if ($source->getOwner()->getId() !== $user->getId()) {
+            return $this->json(['error' => 'Access denied'], 403);
+        }
+        if (!$source->isActive()) {
+            return $this->json(['error' => 'Source is not active'], 400);
+        }
+
+        $relativePaths = $request->request->all('relativePaths');
+        if (!is_array($relativePaths) || count($relativePaths) === 0) {
+            $single = (string) $request->request->get('relativePath', '');
+            if ($single !== '') {
+                $relativePaths = [$single];
+            }
+        }
+        $relativePaths = array_values(array_filter(array_map('strval', (array) $relativePaths), fn($p) => $p !== ''));
+        if (count($relativePaths) === 0) {
+            return $this->json(['error' => 'No paths selected'], 400);
+        }
+        if (count($relativePaths) > 500) {
+            return $this->json(['error' => 'Too many paths (max 500)'], 400);
+        }
+
+        $maxDownloads = $request->request->get('max_downloads');
+        $expiryDays = $request->request->get('expiry_days');
+        $password = $request->request->get('password');
+        $recipientEmail = $request->request->get('recipient_email');
+        $message = $request->request->get('message');
+
+        try {
+            $transfer = $this->libraryService->shareSelection(
+                $source,
+                $relativePaths,
+                $user,
+                $maxDownloads !== null && $maxDownloads !== '' ? (int) $maxDownloads : null,
+                $expiryDays !== null && $expiryDays !== '' ? (int) $expiryDays : null,
+                $password !== '' ? (string) $password : null,
+                $recipientEmail !== '' ? (string) $recipientEmail : null,
+                $message !== '' ? (string) $message : null,
+            );
+
+            $rawToken = $transfer->getRawToken();
             $downloadUrl = $this->generateUrl(
                 'app_download',
                 ['token' => $rawToken],
                 \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL
             );
 
-            $file = $transfer->getFiles()->first();
             return $this->json([
                 'success' => true,
                 'transfer' => [
                     'id' => $transfer->getId(),
-                    'fileId' => $file?->getId(),
                     'token' => $rawToken,
                     'downloadUrl' => $downloadUrl,
                     'filename' => $transfer->getOriginalFilename(),
                     'size' => $transfer->getFormattedSize(),
                     'expiresAt' => $transfer->getExpiresAt()->format('c'),
                     'maxDownloads' => $transfer->getMaxDownloads(),
-                    'isDirectory' => $item->isDirectory(),
+                    'fileCount' => $transfer->getFileCount(),
                 ],
             ]);
+        } catch (\InvalidArgumentException $e) {
+            return $this->json(['error' => $e->getMessage()], 400);
         } catch (\Throwable $e) {
             return $this->json(['error' => 'Could not create share: ' . $e->getMessage()], 500);
         }
+    }
+
+    private function jsonShareResponse(\App\Entity\Transfer $transfer, LibraryItem $item): JsonResponse
+    {
+        $rawToken = $transfer->getRawToken();
+        $downloadUrl = $this->generateUrl(
+            'app_download',
+            ['token' => $rawToken],
+            \Symfony\Component\Routing\Generator\UrlGeneratorInterface::ABSOLUTE_URL
+        );
+
+        $file = $transfer->getFiles()->first();
+        return $this->json([
+            'success' => true,
+            'transfer' => [
+                'id' => $transfer->getId(),
+                'fileId' => $file?->getId(),
+                'token' => $rawToken,
+                'downloadUrl' => $downloadUrl,
+                'filename' => $transfer->getOriginalFilename(),
+                'size' => $transfer->getFormattedSize(),
+                'expiresAt' => $transfer->getExpiresAt()->format('c'),
+                'maxDownloads' => $transfer->getMaxDownloads(),
+                'isDirectory' => $item->isDirectory(),
+            ],
+        ]);
     }
 }

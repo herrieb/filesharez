@@ -34,7 +34,7 @@
                     <span class="text-aero glow-text">A Modern Glass Interface.</span>
                 </h1>
                 <p class="hero-subtitle">
-                    Private uploads, expiring downloads, email delivery, and premium security &mdash; inside a futuristic transfer platform.
+                    Private uploads, expiring downloads, email delivery, resumable transfers, and a personal library &mdash; inside a futuristic transfer platform.
                 </p>
                 <div class="hero-actions">
                     {% if app.user %}
@@ -77,7 +77,7 @@
                             <div class="progress-bar-track">
                                 <div class="progress-bar-fill shimmer-bar" style="width:67%"></div>
                             </div>
-                            <span class="text-aero/50 text-[11px] font-mono">67%</span>
+                            <span class="text-aero/50 text-[11px] font-mono">67% · 12.4 MB/s · 2m</span>
                         </div>
 
                         <div class="transfer-mock">
@@ -157,6 +157,20 @@
                 </div>
                 <h3 class="feature-title">Private Access</h3>
                 <p class="feature-desc">Authenticated uploads only. Every transfer is tied to a verified user account &mdash; no anonymous chaos.</p>
+            </div>
+            <div class="glass animate-in" style="animation-delay:0.4s">
+                <div class="feature-icon-wrap" style="background:rgba(108,178,255,0.16);border-color:rgba(108,178,255,0.32);">
+                    <svg class="w-6 h-6 text-aero" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7zm0 0v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-8l-2-2H5a2 2 0 00-2 2z"/></svg>
+                </div>
+                <h3 class="feature-title">Personal Library</h3>
+                <p class="feature-desc">Register folders on your server. Browse, share single files, or zip up whole directories &mdash; bulk-select with checkboxes.</p>
+            </div>
+            <div class="glass animate-in" style="animation-delay:0.45s">
+                <div class="feature-icon-wrap" style="background:rgba(167,139,250,0.16);border-color:rgba(167,139,250,0.32);">
+                    <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                </div>
+                <h3 class="feature-title">Resumable Uploads</h3>
+                <p class="feature-desc">tus.io-powered chunked transfers. Pause, resume, survive network drops. Per-file progress with speed and ETA.</p>
             </div>
         </div>
     </section>

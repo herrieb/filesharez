@@ -35,6 +35,7 @@ class LibraryRescanCommand extends Command
             ->addOption('name', null, InputOption::VALUE_REQUIRED, 'Display name for new source (use with --add)')
             ->addOption('path', null, InputOption::VALUE_REQUIRED, 'Absolute path for new source (use with --add)')
             ->addOption('email', null, InputOption::VALUE_REQUIRED, 'Owner email (use with --add)')
+            ->addOption('depth', 'd', InputOption::VALUE_REQUIRED, 'Override scan depth (default uses LIBRARY_SCAN_DEPTH env or 5)')
         ;
     }
 
@@ -73,9 +74,12 @@ class LibraryRescanCommand extends Command
             return Command::FAILURE;
         }
 
+        $depth = $input->getOption('depth');
+        $depth = $depth !== null ? max(1, (int) $depth) : null;
+
         $total = 0;
         foreach ($sources as $source) {
-            $count = $this->libraryService->rescanSource($source);
+            $count = $this->libraryService->rescanSource($source, $depth);
             $total += $count;
             $io->writeln(sprintf(
                 '<info>%s</info> — %d items (%s)',
