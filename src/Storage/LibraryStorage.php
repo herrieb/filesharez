@@ -17,10 +17,13 @@ class LibraryStorage
     /** @var string[] */
     private array $allowedRoots = [];
 
-    public function __construct(string $libraryPath = null)
+    public function __construct(string $libraryPath = null, ?string $externalPath = null)
     {
         if ($libraryPath) {
             $this->addAllowedRoot($libraryPath);
+        }
+        if ($externalPath) {
+            $this->addAllowedRoot($externalPath);
         }
     }
 

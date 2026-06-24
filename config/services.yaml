@@ -4,6 +4,7 @@ parameters:
     app.default_expiry_days: '%env(int:DEFAULT_EXPIRY_DAYS)%'
     app.default_max_downloads: '%env(int:DEFAULT_MAX_DOWNLOADS)%'
     app.library_path: '%env(default::LIBRARY_PATH)%'
+    app.library_external_path: '%env(default::LIBRARY_EXTERNAL_PATH)%'
     app.library_scan_depth: '%env(int:default::LIBRARY_SCAN_DEPTH)%'
     app.theme_default: '%env(default::THEME_DEFAULT)%'
     app.storage_path: '/app/storage'
@@ -44,6 +45,7 @@ services:
     App\Storage\LibraryStorage:
         arguments:
             $libraryPath: '%app.library_path%'
+            $externalPath: '%app.library_external_path%'
 
     App\Service\TransferService:
         arguments:
