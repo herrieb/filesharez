@@ -1,8 +1,66 @@
 {% extends 'base.html.twig' %}
 
+{% set _theme = app.request.attributes.get('_theme') %}
+{% set _layout = _theme.layout|default('taskbar') %}
+{% set _route = app.request.attributes.get('_route') %}
+
 {% block body %}
-<div class="flex min-h-screen">
-    <main class="flex-1 pb-32 md:pb-24 px-4 sm:px-6 md:px-10 pt-6 sm:pt-8 overflow-x-hidden">
+<div class="app-shell app-shell--{{ _layout }} flex min-h-screen">
+    {% if _layout == 'sidebar' %}
+        {# ---------- DESKTOP SIDEBAR (md+) ---------- #}
+        <aside class="sidebar sidebar-desktop md:flex" aria-label="Main navigation">
+            <div class="sidebar-inner flex flex-col h-full">
+                <a href="{{ path('app_dashboard') }}" class="sidebar-brand-link flex items-center gap-3 px-5 py-5">
+                    <span class="sidebar-orb">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                    </span>
+                    <span class="sidebar-brand text-sm">FileShareZ</span>
+                </a>
+                <div class="sidebar-divider"></div>
+                <nav class="flex-1 overflow-y-auto px-2 py-3">
+                    <div class="sidebar-section-label px-3 pb-1.5">Workspace</div>
+                    <a href="{{ path('app_dashboard') }}" class="sidebar-item {{ _route == 'app_dashboard' ? 'active' : '' }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="{{ path('app_upload') }}" class="sidebar-item {{ _route == 'app_upload' ? 'active' : '' }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                        <span>Upload</span>
+                    </a>
+                    <a href="{{ path('app_transfers') }}" class="sidebar-item {{ _route == 'app_transfers' ? 'active' : '' }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span>Transfers</span>
+                    </a>
+                    <a href="{{ path('app_library') }}" class="sidebar-item {{ _route starts with 'app_library' ? 'active' : '' }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+                        <span>Library</span>
+                    </a>
+                    <a href="{{ path('app_file_requests') }}" class="sidebar-item {{ _route starts with 'app_file_request' ? 'active' : '' }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                        <span>File Requests</span>
+                    </a>
+                    <a href="{{ path('app_account') }}" class="sidebar-item {{ _route starts with 'app_account' ? 'active' : '' }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        <span>Account</span>
+                    </a>
+                    {% if is_granted('ROLE_ADMIN') %}
+                        <div class="sidebar-section-label px-3 pt-4 pb-1.5">Admin</div>
+                        <a href="{{ path('app_admin_dashboard') }}" class="sidebar-item {{ _route starts with 'app_admin' ? 'active' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            <span>Admin</span>
+                        </a>
+                    {% endif %}
+                </nav>
+                <div class="sidebar-divider"></div>
+                <a href="{{ path('app_logout') }}" class="sidebar-item sidebar-signout m-3" title="Sign out">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    <span>Sign out</span>
+                </a>
+            </div>
+        </aside>
+    {% endif %}
+
+    <main class="app-main flex-1 pb-32 md:pb-24 px-4 sm:px-6 md:px-10 pt-6 sm:pt-8 overflow-x-hidden{% if _layout == 'sidebar' %} md:ml-0{% endif %}">
         {% for label, messages in app.flashes %}
             {% for message in messages %}
                 <div class="mb-5 glass-panel p-4 animate-in {{ label == 'success' ? 'border-l-2 border-l-success' : 'border-l-2 border-l-danger' }}">
@@ -33,39 +91,40 @@
     ]) %}
 {% endif %}
 
+{% if _layout == 'taskbar' %}
 {# ---------- DESKTOP TASKBAR (md+) ---------- #}
 <nav class="taskbar taskbar-desktop" role="navigation" aria-label="Main navigation">
     <a href="{{ path('app_dashboard') }}" class="taskbar-orb" title="FileShareZ">
         <svg class="w-5 h-5 text-aero" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
     </a>
     <div class="taskbar-divider"></div>
-    <a href="{{ path('app_dashboard') }}" class="taskbar-item {{ app.request.attributes.get('_route') == 'app_dashboard' ? 'active' : '' }}">
+    <a href="{{ path('app_dashboard') }}" class="taskbar-item {{ _route == 'app_dashboard' ? 'active' : '' }}">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
         <span>Dashboard</span>
     </a>
-    <a href="{{ path('app_upload') }}" class="taskbar-item {{ app.request.attributes.get('_route') == 'app_upload' ? 'active' : '' }}">
+    <a href="{{ path('app_upload') }}" class="taskbar-item {{ _route == 'app_upload' ? 'active' : '' }}">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
         <span>Upload</span>
     </a>
-    <a href="{{ path('app_transfers') }}" class="taskbar-item {{ app.request.attributes.get('_route') == 'app_transfers' ? 'active' : '' }}">
+    <a href="{{ path('app_transfers') }}" class="taskbar-item {{ _route == 'app_transfers' ? 'active' : '' }}">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         <span>Transfers</span>
     </a>
-    <a href="{{ path('app_file_requests') }}" class="taskbar-item {{ app.request.attributes.get('_route') starts with 'app_file_request' ? 'active' : '' }}">
+    <a href="{{ path('app_file_requests') }}" class="taskbar-item {{ _route starts with 'app_file_request' ? 'active' : '' }}">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
         <span>Requests</span>
     </a>
-    <a href="{{ path('app_library') }}" class="taskbar-item {{ app.request.attributes.get('_route') starts with 'app_library' ? 'active' : '' }}">
+    <a href="{{ path('app_library') }}" class="taskbar-item {{ _route starts with 'app_library' ? 'active' : '' }}">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7zM3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-8l-2-2H5a2 2 0 00-2 2z"/></svg>
         <span>Library</span>
     </a>
-    <a href="{{ path('app_account') }}" class="taskbar-item {{ app.request.attributes.get('_route') starts with 'app_account' ? 'active' : '' }}">
+    <a href="{{ path('app_account') }}" class="taskbar-item {{ _route starts with 'app_account' ? 'active' : '' }}">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
         <span>Account</span>
     </a>
     {% if is_granted('ROLE_ADMIN') %}
     <div class="taskbar-divider"></div>
-    <a href="{{ path('app_admin_dashboard') }}" class="taskbar-item {{ app.request.attributes.get('_route') starts with 'app_admin' ? 'active' : '' }}">
+    <a href="{{ path('app_admin_dashboard') }}" class="taskbar-item {{ _route starts with 'app_admin' ? 'active' : '' }}">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         <span>Admin</span>
     </a>
@@ -75,12 +134,13 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
     </a>
 </nav>
+{% endif %}
 
 {# ---------- MOBILE BOTTOM TAB BAR (<md) ---------- #}
 <nav class="mobile-tabbar md:hidden" role="navigation" aria-label="Main navigation">
     <div class="mobile-tabbar-inner">
         {% for item in primary_items %}
-            {% set active = app.request.attributes.get('_route') == item.route %}
+            {% set active = _route == item.route %}
             <a href="{{ path(item.route) }}" class="mobile-tab {{ active ? 'active' : '' }}" aria-label="{{ item.label }}">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">{{ item.icon|raw }}</svg>
                 <span>{{ item.label }}</span>
@@ -99,7 +159,7 @@
     <div class="mobile-more-panel" role="dialog" aria-modal="true" aria-label="More navigation">
         <div class="mobile-more-handle"></div>
         {% for item in more_items %}
-            {% set route = app.request.attributes.get('_route') %}
+            {% set route = _route %}
             {% set active = route == item.route or (item.match and route starts with item.match) %}
             <a href="{{ path(item.route) }}" class="mobile-more-link {{ active ? 'active' : '' }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">{{ item.icon|raw }}</svg>

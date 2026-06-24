@@ -26,6 +26,7 @@ abstract class AbstractTheme
         public readonly string $ambientGlow2,
         public readonly string $fontFamily,
         public readonly string $extraCss = '',
+        public readonly string $layout = 'taskbar',
     ) {
     }
 

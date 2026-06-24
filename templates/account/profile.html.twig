@@ -37,7 +37,14 @@
                 <div class="theme-card {{ user.theme == theme.id ? 'active' : '' }}" data-theme-id="{{ theme.id }}">
                     <div class="flex items-start justify-between gap-2">
                         <div class="min-w-0 flex-1">
-                            <div class="theme-card-name">{{ theme.displayName }}</div>
+                            <div class="theme-card-name flex items-center gap-2">
+                                {{ theme.displayName }}
+                                {% if theme.layout == 'sidebar' %}
+                                    <span class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border" style="border-color:rgba(var(--accent-rgb),0.4);color:var(--accent-glow);background:rgba(var(--accent-rgb),0.08)">side menu</span>
+                                {% else %}
+                                    <span class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded border border-white/15 text-white/40">taskbar</span>
+                                {% endif %}
+                            </div>
                             <p class="theme-card-desc">{{ theme.description }}</p>
                             <div class="theme-card-swatches">
                                 <span class="swatch" style="background:{{ theme.accentPrimary }}" title="Primary"></span>
@@ -52,7 +59,7 @@
                             <button type="submit" class="aero-btn-primary px-3 py-1.5 text-xs">{{ user.theme == theme.id ? 'Active' : 'Use' }}</button>
                         </form>
                         <a href="{{ path('app_account_theme_download', {id: theme.id}) }}" class="aero-btn px-3 py-1.5 text-xs">Download .zip</a>
-                        {% if theme.id not in ['longhorn', 'sunset', 'midori', 'rose-gold', 'crt', 'aurora'] %}
+                        {% if theme.id not in ['longhorn', 'sunset', 'midori', 'rose-gold', 'crt', 'aurora', 'tokyo', 'aquarelle', 'brutalist'] %}
                             <form method="post" action="{{ path('app_account_theme_delete', {id: theme.id}) }}" class="inline" onsubmit="return confirm('Delete theme &quot;{{ theme.displayName|escape('js') }}&quot;? This cannot be undone.');">
                                 <input type="hidden" name="_token" value="{{ csrf_token('theme_delete_' ~ theme.id) }}">
                                 <button type="submit" class="aero-btn px-3 py-1.5 text-xs hover:text-danger">Delete</button>

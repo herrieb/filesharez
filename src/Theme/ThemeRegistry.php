@@ -23,6 +23,9 @@ class ThemeRegistry
             new RoseQuartzTheme(),
             new CrtTheme(),
             new AuroraTheme(),
+            new TokyoTheme(),
+            new AquarelleTheme(),
+            new BrutalistTheme(),
         ];
         foreach ($builtIn as $theme) {
             $this->themes[$theme->id] = $theme;
@@ -83,6 +86,9 @@ class ThemeRegistry
             new RoseQuartzTheme(),
             new CrtTheme(),
             new AuroraTheme(),
+            new TokyoTheme(),
+            new AquarelleTheme(),
+            new BrutalistTheme(),
         ];
         $map = [];
         foreach ($builtIn as $theme) {
