@@ -11,7 +11,7 @@ services:
       - /mnt/data/filesharez/previews:/app/storage/previews
       - /mnt/data/filesharez/tmp:/app/storage/tmp
       - /mnt/data/filesharez/quarantine:/app/storage/quarantine
-      - /home/twan/trnts/complete:/mnt/library:ro
+      - /home/twan/trnts/complete:/mnt/library
     environment:
       APP_ENV: ${APP_ENV:-dev}
       APP_SECRET: ${APP_SECRET:-changeMeThisIsNotProductionSafe}
@@ -98,7 +98,7 @@ services:
       - /mnt/data/filesharez/previews:/app/storage/previews
       - /mnt/data/filesharez/tmp:/app/storage/tmp
       - /mnt/data/filesharez/quarantine:/app/storage/quarantine
-      - /home/twan/trnts/complete:/mnt/library:ro
+      - /home/twan/trnts/complete:/mnt/library
     environment:
       APP_ENV: ${APP_ENV:-dev}
       APP_SECRET: ${APP_SECRET:-changeMeThisIsNotProductionSafe}
@@ -127,7 +127,7 @@ services:
       - /mnt/data/filesharez/previews:/app/storage/previews
       - /mnt/data/filesharez/tmp:/app/storage/tmp
       - /mnt/data/filesharez/quarantine:/app/storage/quarantine
-      - /home/twan/trnts/complete:/mnt/library:ro
+      - /home/twan/trnts/complete:/mnt/library
     environment:
       APP_ENV: ${APP_ENV:-dev}
       APP_SECRET: ${APP_SECRET:-changeMeThisIsNotProductionSafe}

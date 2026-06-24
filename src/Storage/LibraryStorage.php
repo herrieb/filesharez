@@ -398,4 +398,173 @@ class LibraryStorage
             }
         }
     }
+
+    /**
+     * Compute the absolute filesystem path where a file or folder with
+     * $relativePath (under $sourceRoot) should live. Does NOT require the
+     * file to exist — used for writes. Refuses symlinks and any path that
+     * contains .. components.
+     */
+    public function resolveWriteTarget(string $sourceRoot, string $relativePath): string
+    {
+        $rootReal = realpath($sourceRoot);
+        if ($rootReal === false) {
+            throw new \RuntimeException('Source root does not exist: ' . $sourceRoot);
+        }
+        $rootReal = rtrim($rootReal, '/');
+        $relative = ltrim($relativePath, '/');
+        if ($relative === '' || $relative === '.') {
+            return $rootReal;
+        }
+        if (str_contains($relative, "\0")) {
+            throw new \RuntimeException('Invalid path');
+        }
+        foreach (explode('/', $relative) as $segment) {
+            if ($segment === '..' || $segment === '.') {
+                throw new \RuntimeException('Path contains .. or . segments');
+            }
+        }
+        return $rootReal . '/' . $relative;
+    }
+
+    /**
+     * Write $sourceStream to $relativePath inside $sourceRoot. Streams
+     * the bytes (no full-file buffering), then chmods to 0644.
+     * Creates parent directories as needed. Returns the absolute path
+     * of the file that was written.
+     */
+    public function writeStream(string $sourceRoot, string $relativePath, $sourceStream, int $maxBytes = -1): string
+    {
+        $absolute = $this->resolveWriteTarget($sourceRoot, $relativePath);
+
+        if (is_dir($absolute)) {
+            throw new \RuntimeException('Cannot overwrite a directory with a file');
+        }
+
+        $parent = dirname($absolute);
+        $rootReal = realpath($sourceRoot);
+        if ($rootReal === false) {
+            throw new \RuntimeException('Source root does not exist: ' . $sourceRoot);
+        }
+        $parentReal = realpath($parent);
+        if ($parentReal === false || ($parentReal !== $rootReal && !str_starts_with($parentReal, rtrim($rootReal, '/') . '/'))) {
+            throw new \RuntimeException('Parent directory is outside the source root');
+        }
+        if (!is_dir($parent) && !@mkdir($parent, 0775, true) && !is_dir($parent)) {
+            throw new \RuntimeException('Could not create parent directory: ' . $parent);
+        }
+
+        $tmp = $absolute . '.partial-' . bin2hex(random_bytes(4));
+        $dest = fopen($tmp, 'wb');
+        if ($dest === false) {
+            throw new \RuntimeException('Could not open destination for write');
+        }
+        $written = 0;
+        try {
+            while (!feof($sourceStream)) {
+                $chunk = fread($sourceStream, 65536);
+                if ($chunk === false || $chunk === '') {
+                    break;
+                }
+                $written += strlen($chunk);
+                if ($maxBytes > 0 && $written > $maxBytes) {
+                    throw new \RuntimeException('Upload exceeds maximum size');
+                }
+                fwrite($dest, $chunk);
+            }
+        } finally {
+            if (is_resource($dest)) {
+                fclose($dest);
+            }
+        }
+
+        if (!@rename($tmp, $absolute)) {
+            @unlink($tmp);
+            throw new \RuntimeException('Could not finalize file');
+        }
+        @chmod($absolute, 0644);
+        return $absolute;
+    }
+
+    /**
+     * Create a directory at $relativePath inside $sourceRoot. Idempotent:
+     * if the directory already exists, returns its absolute path.
+     */
+    public function mkdir(string $sourceRoot, string $relativePath): string
+    {
+        $absolute = $this->resolveWriteTarget($sourceRoot, $relativePath);
+        $rootReal = realpath($sourceRoot);
+        if ($rootReal === false) {
+            throw new \RuntimeException('Source root does not exist: ' . $sourceRoot);
+        }
+
+        if (is_dir($absolute)) {
+            return $absolute;
+        }
+        if (file_exists($absolute)) {
+            throw new \RuntimeException('Path already exists as a file');
+        }
+        if (!@mkdir($absolute, 0775, true) && !is_dir($absolute)) {
+            throw new \RuntimeException('Could not create directory: ' . $relativePath);
+        }
+        @chmod($absolute, 0755);
+        return $absolute;
+    }
+
+    /**
+     * Remove a file or directory at $absolutePath. The path must already
+     * resolve to something inside $sourceRoot. Throws if the path doesn't
+     * exist. Symlink targets are not followed — we delete the link only.
+     */
+    public function remove(string $sourceRoot, string $absolutePath): void
+    {
+        $this->assertInsideSource($sourceRoot, $absolutePath);
+        $real = realpath($absolutePath);
+        if ($real === false) {
+            throw new \RuntimeException('Path does not exist');
+        }
+        $rootReal = realpath($sourceRoot);
+        if ($real === $rootReal) {
+            throw new \RuntimeException('Cannot delete a source root');
+        }
+
+        if (is_link($absolutePath)) {
+            if (!@unlink($absolutePath)) {
+                throw new \RuntimeException('Could not delete symlink');
+            }
+            return;
+        }
+
+        if (is_file($real) || is_file($absolutePath)) {
+            if (!@unlink($real)) {
+                throw new \RuntimeException('Could not delete file');
+            }
+            return;
+        }
+
+        if (is_dir($real)) {
+            $this->rmdirRecursive($real);
+            return;
+        }
+
+        throw new \RuntimeException('Path is neither file nor directory');
+    }
+
+    private function rmdirRecursive(string $dir): void
+    {
+        $iter = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ($iter as $f) {
+            if ($f->isLink() || $f->isFile()) {
+                @unlink($f->getPathname());
+            } elseif ($f->isDir()) {
+                @rmdir($f->getPathname());
+            }
+        }
+        if (!@rmdir($dir)) {
+            throw new \RuntimeException('Could not delete directory: ' . $dir);
+        }
+    }
 }

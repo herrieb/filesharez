@@ -350,4 +350,139 @@ class LibraryController extends AbstractController
             ],
         ]);
     }
+
+    /**
+     * Upload a file into a library source. The relative folder is the
+     * `path` field; the file is uploaded as a multipart `file` form field.
+     */
+    #[Route('/sources/{id}/upload', name: 'app_library_upload', methods: ['POST'])]
+    public function uploadFile(string $id, Request $request): Response
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $source = $this->sourceRepository->find($id);
+        if (!$source) {
+            return $this->json(['error' => 'Source not found'], 404);
+        }
+        if ($source->getOwner()->getId() !== $user->getId()) {
+            return $this->json(['error' => 'Access denied'], 403);
+        }
+        if (!$source->isActive()) {
+            return $this->json(['error' => 'Source is not active'], 400);
+        }
+
+        $file = $request->files->get('file');
+        if ($file === null) {
+            return $this->json(['error' => 'No file uploaded'], 400);
+        }
+
+        $relativeFolder = (string) $request->request->get('path', '/');
+
+        try {
+            $absolute = $this->libraryService->uploadFile($source, $user, $file, $relativeFolder);
+        } catch (\InvalidArgumentException $e) {
+            return $this->json(['error' => $e->getMessage()], 400);
+        } catch (\Throwable $e) {
+            return $this->json(['error' => 'Upload failed: ' . $e->getMessage()], 500);
+        }
+
+        if ($request->isXmlHttpRequest()) {
+            return $this->json([
+                'success' => true,
+                'file' => [
+                    'name' => basename($absolute),
+                    'size' => filesize($absolute),
+                    'path' => '/' . ltrim($relativeFolder, '/') . ($relativeFolder === '/' ? '' : '/') . basename($absolute),
+                ],
+            ]);
+        }
+
+        $this->addFlash('success', 'Uploaded ' . basename($absolute) . '.');
+        return $this->redirectToRoute('app_library_source_browse', [
+            'id' => $source->getId(),
+            'path' => '/' . ltrim($relativeFolder, '/'),
+        ]);
+    }
+
+    /**
+     * Create a folder inside a library source.
+     */
+    #[Route('/sources/{id}/mkdir', name: 'app_library_mkdir', methods: ['POST'])]
+    public function createFolder(string $id, Request $request): Response
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $source = $this->sourceRepository->find($id);
+        if (!$source) {
+            return $this->json(['error' => 'Source not found'], 404);
+        }
+        if ($source->getOwner()->getId() !== $user->getId()) {
+            return $this->json(['error' => 'Access denied'], 403);
+        }
+        if (!$source->isActive()) {
+            return $this->json(['error' => 'Source is not active'], 400);
+        }
+
+        $relativeFolder = (string) $request->request->get('path', '/');
+        $name = trim((string) $request->request->get('name', ''));
+        if ($name === '') {
+            return $this->json(['error' => 'Folder name is required'], 400);
+        }
+
+        try {
+            $absolute = $this->libraryService->createFolder($source, $user, $relativeFolder, $name);
+        } catch (\InvalidArgumentException $e) {
+            return $this->json(['error' => $e->getMessage()], 400);
+        } catch (\Throwable $e) {
+            return $this->json(['error' => 'Could not create folder: ' . $e->getMessage()], 500);
+        }
+
+        if ($request->isXmlHttpRequest()) {
+            return $this->json(['success' => true, 'name' => basename($absolute)]);
+        }
+
+        $this->addFlash('success', 'Created folder ' . basename($absolute) . '.');
+        return $this->redirectToRoute('app_library_source_browse', [
+            'id' => $source->getId(),
+            'path' => '/' . ltrim($relativeFolder, '/'),
+        ]);
+    }
+
+    /**
+     * Delete a file or folder from a library source.
+     */
+    #[Route('/sources/{id}/item', name: 'app_library_item_delete', methods: ['DELETE', 'POST'])]
+    public function deleteItem(string $id, Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $source = $this->sourceRepository->find($id);
+        if (!$source) {
+            return $this->json(['error' => 'Source not found'], 404);
+        }
+        if ($source->getOwner()->getId() !== $user->getId()) {
+            return $this->json(['error' => 'Access denied'], 403);
+        }
+        if (!$source->isActive()) {
+            return $this->json(['error' => 'Source is not active'], 400);
+        }
+
+        $relativePath = (string) $request->request->get('path', '');
+        if ($relativePath === '') {
+            return $this->json(['error' => 'path is required'], 400);
+        }
+
+        try {
+            $this->libraryService->deleteItem($source, $user, $relativePath);
+        } catch (\InvalidArgumentException $e) {
+            return $this->json(['error' => $e->getMessage()], 400);
+        } catch (\Throwable $e) {
+            return $this->json(['error' => 'Delete failed: ' . $e->getMessage()], 500);
+        }
+
+        return $this->json(['success' => true]);
+    }
 }

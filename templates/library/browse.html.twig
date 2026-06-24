@@ -59,6 +59,14 @@
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                     Rescan
                 </button>
+                <button onclick="document.getElementById('upload-modal').classList.remove('hidden')" class="aero-btn px-3 py-1.5 text-xs flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                    Upload
+                </button>
+                <button onclick="document.getElementById('mkdir-modal').classList.remove('hidden')" class="aero-btn px-3 py-1.5 text-xs flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6M5 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H7a2 2 0 01-2-2V7z"/></svg>
+                    New folder
+                </button>
             {% endif %}
             <button @click="showShare = true; window._sharingSelection = true" class="aero-btn-primary px-3 py-1.5 text-xs flex items-center gap-1.5">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m9.032 4.026a3 3 0 10-5.464-2.732 3 3 0 005.464 2.732zm-9.032-4.026a3 3 0 105.464-2.684 3 3 0 00-5.464 2.684z"/></svg>
@@ -74,6 +82,8 @@
     {% endif %}
 
     {% include 'library/_share_modal.html.twig' with {source: state.source} %}
+    {% include 'library/_upload_modal.html.twig' with {state: state} %}
+    {% include 'library/_mkdir_modal.html.twig' with {state: state} %}
 </div>
 
 <style>[x-cloak]{display:none!important;}</style>
@@ -146,6 +156,30 @@
         })
         .then(r => r.ok ? location.reload() : Promise.reject(new Error('fail')))
         .catch(() => { btn.disabled = false; btn.innerHTML = orig; alert('Rescan failed'); });
+    };
+
+    window.libraryDelete = function(path, name, btn) {
+        if (!confirm('Delete "' + name + '"? This cannot be undone.')) return;
+        const orig = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '...';
+        const formData = new FormData();
+        formData.append('path', path);
+        fetch('/library/sources/' + window._libraryContext.sourceId + '/item', {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => r.ok ? r.json() : Promise.reject(new Error('http ' + r.status)))
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Delete failed: ' + (data.error || 'Unknown error'));
+                btn.disabled = false;
+                btn.innerHTML = orig;
+            }
+        })
+        .catch(err => { alert('Network error: ' + err.message); btn.disabled = false; btn.innerHTML = orig; });
     };
 })();
 </script>

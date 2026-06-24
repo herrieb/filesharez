@@ -349,6 +349,181 @@ class LibraryService
     }
 
     /**
+     * Save an uploaded file into a source at a given relative path. The
+     * file is written streamed (no full-buffer), capped at $this->maxUploadSize,
+     * and rejected if its extension isn't on the allowlist. The source's
+     * owner is required.
+     */
+    public function uploadFile(
+        LibrarySource $source,
+        User $owner,
+        \Symfony\Component\HttpFoundation\File\UploadedFile $file,
+        string $relativeFolder = '/',
+    ): string {
+        $this->assertOwnsSource($source, $owner);
+
+        $relativeFolder = '/' . ltrim($relativeFolder, '/');
+        if ($relativeFolder !== '/' && str_contains($relativeFolder, '..')) {
+            throw new \InvalidArgumentException('Invalid path');
+        }
+
+        $originalName = $file->getClientOriginalName();
+        $safeName = $this->sanitizeFilename($originalName);
+        if ($safeName === '' || $safeName === '.') {
+            throw new \InvalidArgumentException('Invalid filename');
+        }
+        if (!$this->isExtensionAllowed($safeName)) {
+            throw new \InvalidArgumentException('File type not allowed: ' . $safeName);
+        }
+
+        $size = (int) $file->getSize();
+        if ($size <= 0) {
+            throw new \InvalidArgumentException('Empty upload');
+        }
+        if ($size > $this->maxUploadSizeBytes()) {
+            throw new \InvalidArgumentException('File exceeds maximum size');
+        }
+
+        $relativePath = ltrim($relativeFolder, '/') . ($relativeFolder === '/' ? '' : '/') . $safeName;
+        if (ltrim($relativeFolder, '/') === '') {
+            $relativePath = $safeName;
+        }
+
+        $absolute = $this->libraryStorage->writeStream(
+            $source->getPath(),
+            '/' . $relativePath,
+            fopen($file->getPathname(), 'rb'),
+            $this->maxUploadSizeBytes()
+        );
+
+        $entry = [
+            'absolute' => $absolute,
+            'path' => $absolute,
+            'name' => $safeName,
+            'parent_path' => dirname($absolute),
+            'relative_path' => $relativePath,
+            'size_bytes' => $size,
+            'is_directory' => false,
+            'mime_type' => $file->getMimeType() ?? $this->libraryStorage->mimeType($absolute),
+        ];
+        $this->ensureItemForEntry($source, $entry);
+
+        $this->entityManager->flush();
+        return $absolute;
+    }
+
+    /**
+     * Create a directory inside a source at the given relative path. The
+     * source's owner is required.
+     */
+    public function createFolder(LibrarySource $source, User $owner, string $relativePath, string $name): string
+    {
+        $this->assertOwnsSource($source, $owner);
+
+        $relativePath = '/' . ltrim($relativePath, '/');
+        if ($relativePath !== '/' && str_contains($relativePath, '..')) {
+            throw new \InvalidArgumentException('Invalid path');
+        }
+        $safeName = $this->sanitizeFolderName($name);
+        if ($safeName === '' || $safeName === '.') {
+            throw new \InvalidArgumentException('Invalid folder name');
+        }
+
+        $target = ltrim($relativePath, '/') . ($relativePath === '/' ? '' : '/') . $safeName;
+        $absolute = $this->libraryStorage->mkdir($source->getPath(), '/' . $target);
+
+        $entry = [
+            'absolute' => $absolute,
+            'path' => $absolute,
+            'name' => $safeName,
+            'parent_path' => dirname($absolute),
+            'relative_path' => $target,
+            'size_bytes' => 0,
+            'is_directory' => true,
+            'mime_type' => null,
+        ];
+        $this->ensureItemForEntry($source, $entry);
+        $this->entityManager->flush();
+        return $absolute;
+    }
+
+    /**
+     * Remove a file or folder from a source. The source's owner is required.
+     * Cleans up the LibraryItem row so the picker doesn't keep showing it.
+     */
+    public function deleteItem(LibrarySource $source, User $owner, string $relativePath): void
+    {
+        $this->assertOwnsSource($source, $owner);
+
+        $relativePath = '/' . ltrim($relativePath, '/');
+        if ($relativePath === '/') {
+            throw new \InvalidArgumentException('Cannot delete a source root');
+        }
+        if (str_contains($relativePath, '..')) {
+            throw new \InvalidArgumentException('Invalid path');
+        }
+
+        $absolute = $this->libraryStorage->resolveUnderSource($source->getPath(), $relativePath);
+        $this->libraryStorage->remove($source->getPath(), $absolute);
+
+        $items = $this->itemRepository->findBy(['source' => $source->getId()]);
+        foreach ($items as $item) {
+            if ($item->getPath() === $absolute || str_starts_with($item->getPath(), rtrim($absolute, '/') . '/')) {
+                $this->entityManager->remove($item);
+            }
+        }
+        $this->entityManager->flush();
+    }
+
+    private function sanitizeFilename(string $name): string
+    {
+        $name = basename($name);
+        $name = preg_replace('/[^a-zA-Z0-9._-]/', '_', $name) ?? '';
+        $name = preg_replace('/_+/', '_', $name) ?? '';
+        $name = trim($name, '._');
+        if (strlen($name) > 200) {
+            $ext = pathinfo($name, PATHINFO_EXTENSION);
+            $stem = pathinfo($name, PATHINFO_FILENAME);
+            $stem = substr($stem, 0, 200 - strlen($ext) - 1);
+            $name = $stem . '.' . $ext;
+        }
+        return $name;
+    }
+
+    private function sanitizeFolderName(string $name): string
+    {
+        $name = basename($name);
+        $name = preg_replace('/[^a-zA-Z0-9._ -]/', '_', $name) ?? '';
+        $name = preg_replace('/_+/', '_', $name) ?? '';
+        $name = trim($name, '._ ');
+        if ($name === '' || $name === '.' || $name === '..') {
+            return '';
+        }
+        if (strlen($name) > 200) {
+            $name = substr($name, 0, 200);
+        }
+        return $name;
+    }
+
+    private function isExtensionAllowed(string $filename): bool
+    {
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        if ($ext === '') {
+            return false;
+        }
+        $allow = [
+            'pdf','doc','docx','xls','xlsx','ppt','pptx','odt','ods','odp',
+            'txt','md','csv','json','xml','yml','yaml','html','css',
+            'zip','tar','gz','tgz','bz2','7z','rar','xz',
+            'jpg','jpeg','png','gif','webp','svg','bmp','ico','tiff','heic',
+            'mp3','wav','ogg','flac','m4a','aac','opus',
+            'mp4','webm','mkv','mov','avi','m4v','wmv','flv',
+            'iso','img','deb','rpm','apk','dmg','epub','mobi','azw','azw3',
+        ];
+        return in_array($ext, $allow, true);
+    }
+
+    /**
      * Validate + resolve a relative path under $source, returning the disk
      * entry shape used to build a TransferFile. Lazy-creates a LibraryItem
      * row so the share can later be recovered.

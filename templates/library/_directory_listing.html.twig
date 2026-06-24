@@ -59,6 +59,12 @@
                                     title="Share this file">
                                 Share
                             </button>
+                            <button type="button"
+                                    onclick="event.stopPropagation(); libraryDelete('{{ state.current.relative == '/' ? '/' ~ child.name : state.current.relative ~ '/' ~ child.name }}', '{{ child.name|e('js') }}', this);"
+                                    class="aero-btn px-2 py-1 text-[11px] hover:text-danger"
+                                    title="Delete {{ child.isDirectory ? 'folder' : 'file' }}">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 3h6a1 1 0 011 1v2H8V4a1 1 0 011-1z"/></svg>
+                            </button>
                         </div>
                     </div>
                 {% endfor %}

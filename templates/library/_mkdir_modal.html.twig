@@ -1,0 +1,69 @@
+<div id="mkdir-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70" onclick="if (event.target === this) this.classList.add('hidden')">
+    <div class="glass p-6 sm:p-7 w-full max-w-md">
+        <div class="flex items-center justify-between mb-5">
+            <h2 class="text-base font-medium text-white/85">New folder in {{ state.current.is_directory ? '"' ~ state.current.name ~ '"' : 'parent' }}</h2>
+            <button onclick="document.getElementById('mkdir-modal').classList.add('hidden')" class="text-white/30 hover:text-white/60 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <form id="mkdir-form" class="space-y-4">
+            <input type="hidden" name="path" value="{{ state.current.relative }}">
+            <div>
+                <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Folder name</label>
+                <input type="text" name="name" required class="form-input w-full text-sm" placeholder="my-folder" pattern="[^\\/\0]+" maxlength="200">
+                <p class="text-white/30 text-[11px] mt-1.5">Allowed: letters, digits, dot, underscore, dash, space.</p>
+            </div>
+            <div class="flex gap-2 justify-end">
+                <button type="button" onclick="document.getElementById('mkdir-modal').classList.add('hidden')" class="aero-btn px-4 py-2 text-xs">Cancel</button>
+                <button type="submit" id="mkdir-submit" class="aero-btn-primary px-5 py-2 text-xs">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+(function() {
+    const form = document.getElementById('mkdir-form');
+    if (!form || form.dataset.bound) return;
+    form.dataset.bound = '1';
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = form.querySelector('input[name="name"]').value.trim();
+        if (!name) {
+            alert('Enter a folder name');
+            return;
+        }
+        const submitBtn = document.getElementById('mkdir-submit');
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-60', 'cursor-not-allowed');
+        submitBtn.textContent = 'Creating…';
+
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('path', form.querySelector('input[name="path"]').value);
+
+        try {
+            const res = await fetch('/library/sources/' + window._libraryContext.sourceId + '/mkdir', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Failed: ' + (data.error || 'Unknown error'));
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+                submitBtn.textContent = 'Create';
+            }
+        } catch (err) {
+            alert('Network error: ' + err.message);
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+            submitBtn.textContent = 'Create';
+        }
+    });
+})();
+</script>

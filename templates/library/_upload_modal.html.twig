@@ -1,0 +1,99 @@
+<div id="upload-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70" onclick="if (event.target === this) this.classList.add('hidden')">
+    <div class="glass p-6 sm:p-7 w-full max-w-md">
+        <div class="flex items-center justify-between mb-5">
+            <h2 class="text-base font-medium text-white/85">Upload to {{ state.current.is_directory ? '"' ~ state.current.name ~ '"' : 'parent' }}</h2>
+            <button onclick="document.getElementById('upload-modal').classList.add('hidden')" class="text-white/30 hover:text-white/60 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <form id="upload-form" class="space-y-4">
+            <input type="hidden" name="path" value="{{ state.current.relative }}">
+            <div>
+                <label class="block text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">File</label>
+                <input type="file" name="file" required class="form-input w-full text-xs">
+                <p class="text-white/30 text-[11px] mt-1.5">Max 20 GB. Files are written to disk on the library mount.</p>
+            </div>
+            <div id="upload-progress" class="hidden space-y-2">
+                <div class="progress-bar-track">
+                    <div id="upload-progress-fill" class="progress-bar-fill" style="width: 0%"></div>
+                </div>
+                <p id="upload-progress-text" class="text-white/40 text-[11px] text-center font-mono">0%</p>
+            </div>
+            <div class="flex gap-2 justify-end">
+                <button type="button" onclick="document.getElementById('upload-modal').classList.add('hidden')" class="aero-btn px-4 py-2 text-xs">Cancel</button>
+                <button type="submit" id="upload-submit" class="aero-btn-primary px-5 py-2 text-xs">Upload</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+(function() {
+    const form = document.getElementById('upload-form');
+    if (!form || form.dataset.bound) return;
+    form.dataset.bound = '1';
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fileInput = form.querySelector('input[name="file"]');
+        if (!fileInput.files[0]) {
+            alert('Choose a file');
+            return;
+        }
+
+        const submitBtn = document.getElementById('upload-submit');
+        const progress = document.getElementById('upload-progress');
+        const progressFill = document.getElementById('upload-progress-fill');
+        const progressText = document.getElementById('upload-progress-text');
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-60', 'cursor-not-allowed');
+        submitBtn.textContent = 'Uploading…';
+        progress.classList.remove('hidden');
+        progressFill.style.width = '0%';
+        progressText.textContent = '0%';
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('path', form.querySelector('input[name="path"]').value);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/library/sources/' + window._libraryContext.sourceId + '/upload');
+        xhr.upload.addEventListener('progress', (ev) => {
+            if (ev.lengthComputable) {
+                const pct = Math.round((ev.loaded / ev.total) * 100);
+                progressFill.style.width = pct + '%';
+                progressText.textContent = pct + '% · ' + (ev.loaded / 1024 / 1024).toFixed(1) + ' MB';
+            }
+        });
+        xhr.onload = () => {
+            try {
+                const data = JSON.parse(xhr.responseText);
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Failed: ' + (data.error || 'Unknown error'));
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+                    submitBtn.textContent = 'Upload';
+                    progress.classList.add('hidden');
+                }
+            } catch (e) {
+                alert('Failed: ' + e.message);
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+                submitBtn.textContent = 'Upload';
+                progress.classList.add('hidden');
+            }
+        };
+        xhr.onerror = () => {
+            alert('Network error');
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+            submitBtn.textContent = 'Upload';
+            progress.classList.add('hidden');
+        };
+        xhr.send(formData);
+    });
+})();
+</script>
