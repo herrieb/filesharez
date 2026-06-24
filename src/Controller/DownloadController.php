@@ -42,13 +42,17 @@ class DownloadController extends AbstractController
 
         $fileCount = $transfer->getFileCount();
 
-        return $this->render('transfer/download.html.twig', [
+        $response = $this->render('transfer/download.html.twig', [
             'transfer' => $transfer,
             'token' => $token,
             'needsPassword' => $transfer->getPasswordHash() !== null,
             'isMultiFile' => $fileCount > 1,
             'fileCount' => $fileCount,
         ]);
+        $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+        $response->headers->set('Pragma', 'no-cache');
+        $response->headers->set('Expires', '0');
+        return $response;
     }
 
     #[Route('/d/{token}/file/{fileId}', name: 'app_download_file')]
@@ -111,6 +115,7 @@ class DownloadController extends AbstractController
         $response->headers->set('Content-Disposition', 'attachment; filename="' . $downloadResult->filename . '"');
         $response->headers->set('Content-Length', (string) $downloadResult->size);
         $response->headers->set('X-Accel-Buffering', 'no');
+        $response->headers->set('Cache-Control', 'no-store, private');
 
         return $response;
     }
@@ -219,10 +224,10 @@ class DownloadController extends AbstractController
         $response = new StreamedResponse(function () use ($transfer, $request, $downloadService) {
             $downloadService->streamZip($transfer, $request);
         });
-
         $response->headers->set('Content-Type', 'application/zip');
         $response->headers->set('Content-Disposition', 'attachment; filename="' . $zipName . '"');
         $response->headers->set('X-Accel-Buffering', 'no');
+        $response->headers->set('Cache-Control', 'no-store, private');
 
         return $response;
     }
