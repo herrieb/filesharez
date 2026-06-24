@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full" data-theme="{{ app.request.attributes.get('_theme_id', 'longhorn') }}">
+<html lang="en" class="h-full" data-theme="{{ app.request.attributes.get('_theme_id') ?: theme_registry.default().id }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}FileShareZ{% endblock %}</title>
     <meta name="description" content="Secure file sharing platform">
-    <meta name="theme-color" content="{{ app.request.attributes.get('_theme').slateBase }}">
+    <meta name="theme-color" content="{{ (app.request.attributes.get('_theme') ?: theme_registry.default()).slateBase }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.10/dist/cdn.min.js"></script>
     <script>

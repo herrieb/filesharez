@@ -6,7 +6,7 @@ parameters:
     app.library_path: '%env(default::LIBRARY_PATH)%'
     app.library_external_path: '%env(default::LIBRARY_EXTERNAL_PATH)%'
     app.library_scan_depth: '%env(int:default::LIBRARY_SCAN_DEPTH)%'
-    app.theme_default: '%env(default::THEME_DEFAULT)%'
+    app.theme_default: 'longhorn'
     app.storage_path: '/app/storage'
 
 services:
