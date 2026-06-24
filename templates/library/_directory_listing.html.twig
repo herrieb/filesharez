@@ -46,19 +46,42 @@
 
                         <div class="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition">
                             {% if child.isDirectory %}
+                                <a href="{{ path('app_library_owner_download', {id: state.source.id, path: state.current.relative == '/' ? '/' ~ child.name : state.current.relative ~ '/' ~ child.name}) }}"
+                                   class="aero-btn px-2.5 py-1 text-[11px]"
+                                   onclick="event.stopPropagation();"
+                                   title="Download this folder as ZIP">
+                                    <svg class="w-3.5 h-3.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                </a>
                                 <button type="button"
                                         onclick="event.stopPropagation(); window._sharingSelection = false; window._sharingPaths = ['{{ state.current.relative == '/' ? '/' ~ child.name : state.current.relative ~ '/' ~ child.name }}']; document.dispatchEvent(new CustomEvent('open-share-modal'));"
                                         class="aero-btn px-2.5 py-1 text-[11px]"
                                         title="Share this folder as ZIP">
                                     ZIP
                                 </button>
+                            {% else %}
+                                {% set previewable = child.mimeType and (child.mimeType starts with 'image/' or child.mimeType starts with 'video/' or child.mimeType starts with 'audio/' or child.mimeType == 'application/pdf' or child.mimeType starts with 'text/') %}
+                                <a href="{{ path('app_library_owner_download', {id: state.source.id, path: state.current.relative == '/' ? '/' ~ child.name : state.current.relative ~ '/' ~ child.name}) }}"
+                                   class="aero-btn px-2 py-1 text-[11px]"
+                                   onclick="event.stopPropagation();"
+                                   title="Download">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                </a>
+                                {% if previewable %}
+                                    <a href="{{ path('app_library_owner_preview', {id: state.source.id, path: state.current.relative == '/' ? '/' ~ child.name : state.current.relative ~ '/' ~ child.name}) }}"
+                                       class="aero-btn px-2 py-1 text-[11px]"
+                                       onclick="event.stopPropagation();"
+                                       target="_blank"
+                                       title="Preview">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    </a>
+                                {% endif %}
+                                <button type="button"
+                                        onclick="event.stopPropagation(); window._sharingSelection = false; window._sharingPaths = ['{{ state.current.relative == '/' ? '/' ~ child.name : state.current.relative ~ '/' ~ child.name }}']; document.dispatchEvent(new CustomEvent('open-share-modal'));"
+                                        class="aero-btn-primary px-2.5 py-1 text-[11px]"
+                                        title="Share this file">
+                                    Share
+                                </button>
                             {% endif %}
-                            <button type="button"
-                                    onclick="event.stopPropagation(); window._sharingSelection = false; window._sharingPaths = ['{{ state.current.relative == '/' ? '/' ~ child.name : state.current.relative ~ '/' ~ child.name }}']; document.dispatchEvent(new CustomEvent('open-share-modal'));"
-                                    class="aero-btn-primary px-2.5 py-1 text-[11px]"
-                                    title="Share this file">
-                                Share
-                            </button>
                             <button type="button"
                                     onclick="event.stopPropagation(); libraryDelete('{{ state.current.relative == '/' ? '/' ~ child.name : state.current.relative ~ '/' ~ child.name }}', '{{ child.name|e('js') }}', this);"
                                     class="aero-btn px-2 py-1 text-[11px] hover:text-danger"

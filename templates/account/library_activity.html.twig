@@ -1,0 +1,53 @@
+{% extends 'app_layout.html.twig' %}
+
+{% block title %}Library Activity - FileShareZ{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6" x-data="{ showAll: false }">
+    <div class="animate-in">
+        <a href="{{ path('app_account') }}" class="text-aero/60 hover:text-aero text-xs uppercase tracking-wider">&larr; Back to Account</a>
+        <h1 class="text-xl sm:text-2xl font-light tracking-wide text-white/90 mt-2">Library Activity</h1>
+        <p class="text-white/35 mt-1 text-sm">Your own direct downloads and previews of library files. The last 100 events are shown.</p>
+    </div>
+
+    {% if logs|length == 0 %}
+        <div class="glass p-10 text-center animate-in">
+            <p class="text-white/30 text-sm">No activity yet. Open a library and try the Download or Preview buttons on a file.</p>
+        </div>
+    {% else %}
+        <div class="glass animate-in overflow-hidden">
+            <div class="divide-y divide-white/5">
+                {% for log in logs %}
+                    <div class="px-5 py-4 flex items-start gap-4 hover:bg-white/[0.02] transition">
+                        <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0
+                                    {% if log.action == 'download' %}bg-aero/10 border border-aero/20
+                                    {% elseif log.action == 'preview' %}bg-success/10 border border-success/20
+                                    {% else %}bg-warn/10 border border-warn/20{% endif %}">
+                            {% if log.action == 'download' %}
+                                <svg class="w-4 h-4 text-aero/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            {% elseif log.action == 'preview' %}
+                                <svg class="w-4 h-4 text-success/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            {% else %}
+                                <svg class="w-4 h-4 text-warn/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-white/85 text-sm font-medium">{{ log.action|capitalize }}</span>
+                                <span class="text-white/35 text-xs">·</span>
+                                <span class="text-white/55 text-xs">{{ log.source.name }}</span>
+                            </div>
+                            <p class="text-white/50 text-xs font-mono truncate mt-0.5" title="{{ log.path }}">{{ log.path }}</p>
+                            <div class="flex items-center gap-3 mt-1.5 text-[11px] text-white/30 font-mono">
+                                <span>{{ log.createdAt|date('M j, H:i:s') }}</span>
+                                {% if log.sizeBytes %}<span>&middot; {{ log.sizeBytes|format_bytes }}</span>{% endif %}
+                                {% if log.ipAddress %}<span>&middot; {{ log.ipAddress }}</span>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

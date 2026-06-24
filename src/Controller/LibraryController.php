@@ -9,12 +9,16 @@ use App\Repository\LibraryItemRepository;
 use App\Repository\LibrarySourceRepository;
 use App\Repository\SavedTransferTokenRepository;
 use App\Repository\TransferRepository;
+use App\Service\LibraryAccessService;
 use App\Service\LibraryService;
+use App\Service\LibraryStorageStreamer;
+use App\Storage\LibraryStorage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -29,6 +33,9 @@ class LibraryController extends AbstractController
         private SavedTransferTokenRepository $savedTokenRepository,
         private TransferRepository $transferRepository,
         private EntityManagerInterface $entityManager,
+        private LibraryStorage $libraryStorage,
+        private LibraryStorageStreamer $libraryStreamer,
+        private LibraryAccessService $accessService,
     ) {
     }
 
@@ -484,5 +491,120 @@ class LibraryController extends AbstractController
         }
 
         return $this->json(['success' => true]);
+    }
+
+    /**
+     * Owner-direct download of a library file or folder. No transfer token,
+     * no expiry — the user is already logged in as the source owner. Folders
+     * stream as ZIP on the fly. All accesses are logged.
+     */
+    #[Route('/sources/{id}/download', name: 'app_library_owner_download', methods: ['GET'])]
+    public function ownerDownload(string $id, Request $request): Response
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $source = $this->sourceRepository->find($id);
+        if (!$source) return new Response('Source not found', 404);
+        if ($source->getOwner()->getId() !== $user->getId()) return new Response('Access denied', 403);
+        if (!$source->isActive()) return new Response('Source is not active', 400);
+
+        $relativePath = '/' . ltrim((string) $request->query->get('path', '/'), '/');
+        if ($relativePath !== '/' && str_contains($relativePath, '..')) {
+            return new Response('Invalid path', 400);
+        }
+
+        try {
+            $absolute = $this->libraryStorage->resolveUnderSource($source->getPath(), $relativePath);
+        } catch (\Throwable $e) {
+            return new Response('Path not found', 404);
+        }
+
+        if (is_dir($absolute)) {
+            $this->accessService->record($user, $source, $relativePath, 'zip', null, $request);
+            $zipName = basename($absolute) . '.zip';
+            $response = new StreamedResponse(function () use ($absolute, $zipName) {
+                $this->libraryStorage->streamAsZip($absolute, fopen('php://output', 'wb'), $zipName);
+            });
+            $response->headers->set('Content-Type', 'application/zip');
+            $response->headers->set('Content-Disposition', 'attachment; filename="' . $zipName . '"');
+            $response->headers->set('X-Accel-Buffering', 'no');
+            return $response;
+        }
+
+        if (!is_file($absolute)) {
+            return new Response('File not found', 404);
+        }
+
+        $size = filesize($absolute);
+        $name = basename($absolute);
+        $this->accessService->record($user, $source, $relativePath, 'download', $size, $request);
+
+        return $this->libraryStreamer->buildFileResponse($absolute, $name, $size);
+    }
+
+    /**
+     * Owner-direct preview of a library file. Inline for image/video/audio/
+     * pdf/text, attachment for everything else. Folders redirect to download.
+     */
+    #[Route('/sources/{id}/preview', name: 'app_library_owner_preview', methods: ['GET'])]
+    public function ownerPreview(string $id, Request $request): Response
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $source = $this->sourceRepository->find($id);
+        if (!$source) return new Response('Source not found', 404);
+        if ($source->getOwner()->getId() !== $user->getId()) return new Response('Access denied', 403);
+        if (!$source->isActive()) return new Response('Source is not active', 400);
+
+        $relativePath = '/' . ltrim((string) $request->query->get('path', '/'), '/');
+        if ($relativePath !== '/' && str_contains($relativePath, '..')) {
+            return new Response('Invalid path', 400);
+        }
+
+        try {
+            $absolute = $this->libraryStorage->resolveUnderSource($source->getPath(), $relativePath);
+        } catch (\Throwable $e) {
+            return new Response('Path not found', 404);
+        }
+
+        if (is_dir($absolute)) {
+            return $this->redirectToRoute('app_library_owner_download', [
+                'id' => $source->getId(),
+                'path' => $relativePath,
+            ]);
+        }
+        if (!is_file($absolute)) {
+            return new Response('File not found', 404);
+        }
+
+        $size = filesize($absolute);
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $absolute);
+        finfo_close($finfo);
+        $mime = $mime ?: 'application/octet-stream';
+        $name = basename($absolute);
+
+        $inlineTypes = ['image/', 'video/', 'audio/', 'application/pdf', 'text/'];
+        $isInline = false;
+        foreach ($inlineTypes as $type) {
+            if (str_starts_with($mime, $type)) { $isInline = true; break; }
+        }
+
+        $this->accessService->record($user, $source, $relativePath, 'preview', $size, $request);
+
+        $response = new StreamedResponse(function () use ($absolute) {
+            $stream = fopen($absolute, 'rb');
+            if ($stream) { fpassthru($stream); fclose($stream); }
+        });
+        $response->headers->set('Content-Type', $mime);
+        $response->headers->set('Content-Disposition', $isInline ? 'inline' : 'attachment', $name);
+        $response->headers->set('Content-Length', (string) $size);
+        $response->headers->set('X-Accel-Buffering', 'no');
+        if ($isInline) {
+            $response->headers->set('Cache-Control', 'private, max-age=3600');
+        }
+        return $response;
     }
 }

@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Form\Account\ProfileFormType;
 use App\Form\Account\PasswordFormType;
+use App\Service\LibraryAccessService;
 use App\Theme\ThemeRegistry;
 use App\Theme\ThemeStore;
 use Doctrine\ORM\EntityManagerInterface;
@@ -26,6 +27,7 @@ class AccountController extends AbstractController
         private EntityManagerInterface $entityManager,
         private ThemeRegistry $themeRegistry,
         private ThemeStore $themeStore,
+        private LibraryAccessService $accessService,
     ) {
     }
 
@@ -180,5 +182,18 @@ class AccountController extends AbstractController
         $this->themeRegistry->reloadFromDisk();
         $this->addFlash('success', 'Theme deleted.');
         return $this->redirectToRoute('app_account_profile');
+    }
+
+    #[Route('/library-activity', name: 'app_account_library_activity')]
+    public function libraryActivity(): Response
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $logs = $this->accessService->recentForUser($user, 100);
+
+        return $this->render('account/library_activity.html.twig', [
+            'logs' => $logs,
+        ]);
     }
 }
