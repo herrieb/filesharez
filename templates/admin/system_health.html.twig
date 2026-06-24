@@ -31,11 +31,17 @@
             <p class="text-white/25 text-[10px] sm:text-xs mt-1">DB: {{ (dbSize / 1048576)|number_format(1) }} MB</p>
         </div>
         <div class="glass-panel p-4 sm:p-5">
-            <p class="text-white/35 text-[10px] sm:text-xs uppercase tracking-wider mb-1">Disk Free</p>
+            <div class="flex items-center justify-between mb-1">
+                <p class="text-white/35 text-[10px] sm:text-xs uppercase tracking-wider">Library Disk Free</p>
+                <span class="status-badge {% if diskStatus == 'critical' %}status-expired{% elseif diskStatus == 'warning' %}status-exhausted{% else %}status-active{% endif %}">
+                    {{ diskStatus == 'critical' ? 'Critical' : (diskStatus == 'warning' ? 'Warning' : 'OK') }}
+                </span>
+            </div>
             <p class="text-xl sm:text-3xl font-light text-white/80">
                 {{ diskFree > 1073741824 ? (diskFree / 1073741824)|number_format(1) ~ ' GB' : (diskFree / 1048576)|number_format(1) ~ ' MB' }}
             </p>
             <p class="text-white/25 text-[10px] sm:text-xs mt-1">{{ (diskUsed / diskTotal * 100)|number_format(1) }}% used of {{ (diskTotal / 1073741824)|number_format(1) }} GB</p>
+            <p class="text-white/15 text-[10px] mt-0.5 font-mono truncate" title="{{ libraryPath }}">{{ libraryPath }}</p>
         </div>
     </div>
 

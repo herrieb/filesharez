@@ -164,9 +164,17 @@ class AdminController extends AbstractController
             ->getQuery()
             ->getSingleScalarResult();
 
-        $uploadDir = realpath($this->getParameter('kernel.project_dir') . '/var/uploads');
-        $diskFree = $uploadDir ? @disk_free_space($uploadDir) : @disk_free_space('/');
-        $diskTotal = $uploadDir ? @disk_total_space($uploadDir) : @disk_total_space('/');
+        $libraryPath = (string) $this->getParameter('app.library_path');
+        $libraryReal = realpath($libraryPath) ?: $libraryPath;
+        $diskFree  = @disk_free_space($libraryReal);
+        $diskTotal = @disk_total_space($libraryReal);
+        $diskUsed  = ($diskFree !== false && $diskTotal !== false) ? $diskTotal - $diskFree : 0;
+        $diskPercent = ($diskTotal > 0) ? ($diskUsed / $diskTotal) * 100 : 0;
+        $diskStatus = match (true) {
+            $diskPercent >= 90 => 'critical',
+            $diskPercent >= 75 => 'warning',
+            default            => 'ok',
+        };
 
         $phpVersion = PHP_VERSION;
         $symfonyVersion = \Symfony\Component\HttpKernel\Kernel::MAJOR_VERSION . '.' . \Symfony\Component\HttpKernel\Kernel::MINOR_VERSION;
@@ -191,7 +199,9 @@ class AdminController extends AbstractController
             'activeFileRequests' => $activeFileRequests,
             'diskFree' => $diskFree,
             'diskTotal' => $diskTotal,
-            'diskUsed' => $diskTotal - $diskFree,
+            'diskUsed' => $diskUsed,
+            'libraryPath' => $libraryPath,
+            'diskStatus' => $diskStatus,
             'phpVersion' => $phpVersion,
             'symfonyVersion' => $symfonyVersion,
             'dbSize' => $dbSizeResult,
