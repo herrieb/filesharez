@@ -164,17 +164,25 @@ class AdminController extends AbstractController
             ->getQuery()
             ->getSingleScalarResult();
 
+        $diskLocations = [];
+        $uploadStorageBase = $this->getParameter('app.storage_path');
+        $uploadStorageReal = realpath($uploadStorageBase . '/transfers') ?: realpath($uploadStorageBase) ?: $uploadStorageBase;
+        $diskLocations[] = $this->makeDiskRow('uploads', 'LocalStorage (uploads, previews, tmp, quarantine)', $uploadStorageReal);
         $libraryPath = (string) $this->getParameter('app.library_path');
         $libraryReal = realpath($libraryPath) ?: $libraryPath;
-        $diskFree  = @disk_free_space($libraryReal);
-        $diskTotal = @disk_total_space($libraryReal);
-        $diskUsed  = ($diskFree !== false && $diskTotal !== false) ? $diskTotal - $diskFree : 0;
-        $diskPercent = ($diskTotal > 0) ? ($diskUsed / $diskTotal) * 100 : 0;
-        $diskStatus = match (true) {
-            $diskPercent >= 90 => 'critical',
-            $diskPercent >= 75 => 'warning',
-            default            => 'ok',
-        };
+        $diskLocations[] = $this->makeDiskRow('library', 'Library (shared folders)', $libraryReal);
+
+        $diskStatus = 'ok';
+        $diskFree = 0; $diskTotal = 0; $diskUsed = 0;
+        foreach ($diskLocations as $row) {
+            if ($row['status'] === 'critical') { $diskStatus = 'critical'; }
+            elseif ($row['status'] === 'warning' && $diskStatus === 'ok') { $diskStatus = 'warning'; }
+            if ($row['key'] === 'library') {
+                $diskFree  = $row['free'];
+                $diskTotal = $row['total'];
+                $diskUsed  = $row['used'];
+            }
+        }
 
         $phpVersion = PHP_VERSION;
         $symfonyVersion = \Symfony\Component\HttpKernel\Kernel::MAJOR_VERSION . '.' . \Symfony\Component\HttpKernel\Kernel::MINOR_VERSION;
@@ -202,6 +210,7 @@ class AdminController extends AbstractController
             'diskUsed' => $diskUsed,
             'libraryPath' => $libraryPath,
             'diskStatus' => $diskStatus,
+            'diskLocations' => $diskLocations,
             'phpVersion' => $phpVersion,
             'symfonyVersion' => $symfonyVersion,
             'dbSize' => $dbSizeResult,
@@ -216,5 +225,32 @@ class AdminController extends AbstractController
             ->getQuery()
             ->getSingleScalarResult();
         return (int) ($qb ?? 0);
+    }
+
+    /**
+     * Build a row describing one storage location's disk usage.
+     */
+    private function makeDiskRow(string $key, string $label, string $path): array
+    {
+        $free  = @disk_free_space($path);
+        $total = @disk_total_space($path);
+        $used  = ($free !== false && $total !== false) ? $total - $free : 0;
+        $percent = ($total > 0) ? ($used / $total) * 100 : 0;
+        $status = match (true) {
+            $percent >= 90 => 'critical',
+            $percent >= 75 => 'warning',
+            default        => 'ok',
+        };
+        return [
+            'key' => $key,
+            'label' => $label,
+            'path' => $path,
+            'free' => $free !== false ? (int) $free : 0,
+            'total' => $total !== false ? (int) $total : 0,
+            'used' => (int) $used,
+            'percent' => $percent,
+            'status' => $status,
+            'available' => $free !== false && $total !== false,
+        ];
     }
 }

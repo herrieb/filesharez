@@ -31,17 +31,35 @@
             <p class="text-white/25 text-[10px] sm:text-xs mt-1">DB: {{ (dbSize / 1048576)|number_format(1) }} MB</p>
         </div>
         <div class="glass-panel p-4 sm:p-5">
-            <div class="flex items-center justify-between mb-1">
-                <p class="text-white/35 text-[10px] sm:text-xs uppercase tracking-wider">Library Disk Free</p>
-                <span class="status-badge {% if diskStatus == 'critical' %}status-expired{% elseif diskStatus == 'warning' %}status-exhausted{% else %}status-active{% endif %}">
-                    {{ diskStatus == 'critical' ? 'Critical' : (diskStatus == 'warning' ? 'Warning' : 'OK') }}
-                </span>
+            <p class="text-white/35 text-[10px] sm:text-xs uppercase tracking-wider mb-2">Storage</p>
+            <div class="space-y-3">
+                {% for disk in diskLocations %}
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-white/55 text-xs">{{ disk.label }}</span>
+                            <span class="status-badge {% if disk.status == 'critical' %}status-expired{% elseif disk.status == 'warning' %}status-exhausted{% else %}status-active{% endif %}">
+                                {{ disk.status == 'critical' ? 'Critical' : (disk.status == 'warning' ? 'Warning' : 'OK') }}
+                            </span>
+                        </div>
+                        {% if disk.available %}
+                            <p class="text-base sm:text-lg font-light text-white/85">
+                                {{ disk.free > 1073741824 ? (disk.free / 1073741824)|number_format(1) ~ ' GB' : (disk.free / 1048576)|number_format(1) ~ ' MB' }}
+                                <span class="text-white/25 text-xs font-normal">free</span>
+                            </p>
+                            <div class="w-full bg-white/5 rounded-full h-1.5 mt-1.5 overflow-hidden">
+                                <div class="h-1.5 rounded-full transition-all" style="width: {{ disk.percent|number_format(1) }}%; background: linear-gradient(90deg, var(--accent-primary), var(--accent-glow));"></div>
+                            </div>
+                            <p class="text-white/25 text-[10px] sm:text-xs mt-1 flex justify-between">
+                                <span>{{ disk.percent|number_format(1) }}% used &middot; {{ (disk.used / 1073741824)|number_format(2) }} GB of {{ (disk.total / 1073741824)|number_format(2) }} GB</span>
+                            </p>
+                            <p class="text-white/15 text-[10px] mt-0.5 font-mono truncate" title="{{ disk.path }}">{{ disk.path }}</p>
+                        {% else %}
+                            <p class="text-white/35 text-xs">Path not accessible: {{ disk.path }}</p>
+                        {% endif %}
+                    </div>
+                    {% if not loop.last %}<div class="border-t border-white/5"></div>{% endif %}
+                {% endfor %}
             </div>
-            <p class="text-xl sm:text-3xl font-light text-white/80">
-                {{ diskFree > 1073741824 ? (diskFree / 1073741824)|number_format(1) ~ ' GB' : (diskFree / 1048576)|number_format(1) ~ ' MB' }}
-            </p>
-            <p class="text-white/25 text-[10px] sm:text-xs mt-1">{{ (diskUsed / diskTotal * 100)|number_format(1) }}% used of {{ (diskTotal / 1073741824)|number_format(1) }} GB</p>
-            <p class="text-white/15 text-[10px] mt-0.5 font-mono truncate" title="{{ libraryPath }}">{{ libraryPath }}</p>
         </div>
     </div>
 
